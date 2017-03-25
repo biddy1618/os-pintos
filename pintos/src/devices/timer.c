@@ -142,7 +142,6 @@ static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
-  // changed the status of the thread 
   thread_tick (ticks);
 }
 

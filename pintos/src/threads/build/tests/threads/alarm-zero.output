@@ -1,4 +1,4 @@
-Writing command line to /tmp/WR1kAGsbuv.dsk...
+Writing command line to /tmp/DAQ99fpQID.dsk...
 squish-pty bochs -q
 Kernel command line: -q run alarm-zero
 Pintos booting with 4,096 kB RAM...
@@ -8,13 +8,11 @@ Calibrating timer...  102,400 loops/s.
 Boot complete.
 Executing 'alarm-zero':
 (alarm-zero) begin
-1
-0
 (alarm-zero) PASS
 (alarm-zero) end
 Execution of 'alarm-zero' complete.
-Timer: 47 ticks
-Thread: 2 idle ticks, 48 kernel ticks, 0 user ticks
-Console: 385 characters output
+Timer: 45 ticks
+Thread: 1 idle ticks, 47 kernel ticks, 0 user ticks
+Console: 381 characters output
 Keyboard: 0 keys pressed
 Powering off...

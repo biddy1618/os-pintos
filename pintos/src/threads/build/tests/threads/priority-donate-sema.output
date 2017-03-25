@@ -1,4 +1,4 @@
-Writing command line to /tmp/lG66dGnx3W.dsk...
+Writing command line to /tmp/GvC8SIFgYs.dsk...
 squish-pty bochs -q
 Kernel command line: -q run priority-donate-sema
 Pintos booting with 4,096 kB RAM...
@@ -9,21 +9,11 @@ Boot complete.
 Executing 'priority-donate-sema':
 (priority-donate-sema) begin
 (priority-donate-sema) Thread L acquired lock.
-(priority-donate-sema) Thread L downed semaphore.
-(priority-donate-sema) Thread L finished.
 (priority-donate-sema) Main thread finished.
 (priority-donate-sema) end
 Execution of 'priority-donate-sema' complete.
-Timer: 81 ticks
-Thread: 0 idle ticks, 84 kernel ticks, 0 user ticks
-(priority-donate-sema) Thread H acquired lock.
-Kernel PANIC at ../../lib/kernel/list.c:259 in list_remove(): assertion `is_interior (elem)' failed.
-Call stack: 0xc0107486 0xc01079f6 0xc0107a21 0xc0102859 0xc010a7b2 0xc0100f1c.
-The `backtrace' program can make call stacks useful.
-Read "Backtraces" in the "Debugging Tools" chapter
-of the Pintos documentation for more information.
-Timer: 98 ticks
-Thread: 0 idle ticks, 98 kernel ticks, 0 user ticks
-Console: 1046 characters output
+Timer: 67 ticks
+Thread: 0 idle ticks, 70 kernel ticks, 0 user ticks
+Console: 505 characters output
 Keyboard: 0 keys pressed
 Powering off...

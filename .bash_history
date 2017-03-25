@@ -1,50 +1,3 @@
-ls
-wget http://cps.kaist.ac.kr/courses/2017_spring_cs330/sources/pintos.tar.gz
-tar xvf pintos.tar.gz
-cd pintos/src/utils
-make
-vim ~/.bashrc
-cd ../threads/
-source ~/.bashrc 
-make
-vim ~/.bashrc
-make clean
-make
-source ~/.bashrc 
-make clean
-make
-pinros
-pintos
-pintos run alarm-multiple
-pintos run alarm-single
-ls
-cd pintos/
-ls
-vim
-ls
-cd src/utils/
-ls
-pintos run alarm-multiple
-./pintos run alarm-multiple
-cd ../threads/
-make
-../utils/pintos run alarm-multiple
-vim ~/.bashrc
-
-../utils/pintos run alarm-multiple
-exit
-pintos
-pintos run alarm-mutltiple
-./pintos/src/utils/pintos run alarm-multiple
-ls -l
-cd pintos/
-l
-ls
-ls -a
-./src/utils/pintos run alarm-multiple
-vim ./bas
-ls -a
-./src/utils/pintos run alarm-multiple
 $PATH
 -bash
 pintos
@@ -422,3 +375,126 @@ make clean
 make
 pintos -v -- -q run alarm-single
 exit
+cd pintos/src/threads/
+make
+clean
+make clean
+make
+pintos -v -- -q run alarm-single
+make
+pintos -v -- -q run alarm-single
+make
+pintos -v -- -q run alarm-single
+make
+pintos -v -- -q run alarm-single
+backtrace ./build/kernel.o 0xc01072f6 0xc0109415 0xc0109746 0xc010946a 0xc010936a 0xc010052f 0xc01005f6 0xc010009e
+make
+pintos -v -- -q run alarm-single
+make
+pintos -v -- -q run alarm-single
+make
+pintos -v -- -q run alarm-single
+make
+make clean
+make
+pintos -v -- -q run alarm-single
+make
+pintos -v -- -q run alarm-single
+make
+pintos -v -- -q run alarm-single
+make
+pintos -v -- -q run alarm-single
+make
+pintos -v -- -q run alarm-single
+make
+pintos -v -- -q run alarm-single
+make
+pintos -v -- -q run alarm-single
+make
+pintos -v -- -q run alarm-single
+make
+pintos -v -- -q run alarm-single
+MAKE CLEAN
+make clean
+make
+cd build/
+make check
+cd ..
+pintos -v -- -q run alarm-multiple
+pintos -v -- -q run alarm-priority
+cd ~
+ls
+cd pintos/
+ls
+ls -all
+cd ..
+ls -all
+git init
+cd pintos/src/threads/
+make
+pintos -v -- -q run alarm-multiple
+pintos -v -- -q run alarm-zero
+cd ..
+git
+git status
+git add .
+git commit -m "First commit with implemented sleep procedure"
+git config --global user.email "biddy.as.diddy@gmail.com"
+git config --global user.name "biddy1618"
+git commit -m "First commit with implemented sleep procedure"
+git push
+git remote add origin https://github.com/biddy1618/os-pintos.git
+git push
+git push -u origin master
+git remote add origin https://github.com/biddy1618/os-pintos.git
+git push -u origin master
+git remote add origin https://github.com/biddy1618/os-pintos.gi
+git push -u origin master
+git remote add origin git@github.com:biddy1618/os-pintos.git
+git remote rm origin
+git remote add origin git@github.com:biddy1618/os-pintos.git
+git push -u origin master
+git remote rm originssh -vT git@github.com
+ssh -vT git@github.com
+eval "$(ssh-agent -s)"
+ssh-add -l
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+ssh-keygen -t rsa -b 4096 -C "biddy.as.diddy@gmail.com"
+eval "$(ssh-agent -s)"
+git push -u origin master
+git remote add origin git@github.com:biddy1618/os-pintos.git
+ssh -vT git@github.com
+ssh -T billy.anyteen@github.com
+ssh -T git@github.com
+eval "$(ssh-agent -s)"
+ssh-add -l
+ssh-keygen -t rsa -b 4096 -C "biddy.as.diddy@gmail.com"
+cd pintos/src/threads/
+make
+pintos -v -- -q run alarm-single
+ls
+cd ..
+ls
+ls -al
+rm -r .git
+rm -r -v .git/
+rm
+rm --hlp
+rm --help
+rm -r -f .git/
+ls -all
+rm -r -f .ssh/
+ls -all
+rm -r -f .gitconfig 
+ls -all
+git init
+git config --global http.sslverify false
+git config --global user.email "biddy.as.diddy@gmail.com"
+git config --global user.name "biddy1618"
+git remote add origin https://github.com/biddy1618/os-pintos.git
+git add .
+git commit -m "First comming with implemented thread sleep procedure"
+git push -u origin master
+git add .
+git commit -m "Edited some comments, and remove printf(...) statements"
+git push -u origin master

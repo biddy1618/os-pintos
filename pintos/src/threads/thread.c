@@ -77,7 +77,8 @@ void schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
 
 void thread_wakeup (int64_t);
-static bool compare (const struct list_elem *, const struct list_elem *, void *);
+static bool compare_time (const struct list_elem *, const struct list_elem *, void *);
+static bool compare_priority (const struct list_elem *, const struct list_elem *, void *);
 
 
 /* Initializes the threading system by transforming the code
@@ -143,7 +144,7 @@ thread_tick (int64_t ticks)
   else
     kernel_ticks++;
 
-  // check if it is time to wake up any threads
+  /* Check if it is time to wake up any threads. */
   thread_wakeup (ticks);
 
   /* Enforce preemption. */
@@ -152,35 +153,40 @@ thread_tick (int64_t ticks)
 }
 
 
-/* Checks sleeping time of threads has expired */
+/* Checks sleeping time of threads has expired. */
 void
 thread_wakeup (int64_t ticks) {
 
-  // make sure it is external interrupt
+  /* Make sure it is external interrupt. */
   ASSERT(intr_context ());
-  // make sure interrupts are turned off
+  /* Make sure interrupts are turned off. */
   ASSERT(intr_get_level () == INTR_OFF);
   
-  // check if any sleeping thread's wake up time has come
+  /* Check if any sleeping thread's wake up time has come. */
   while (!list_empty(&sleep_list)) 
   {
+    /* Check only the front of ordered list, since sleep_list is ordered according to
+       thread's wake up time. */
     struct thread* t = list_entry (list_front (&sleep_list), struct thread, elem);
     ASSERT (is_thread (t));
     ASSERT (t->status == THREAD_BLOCKED);
 
     if (t->wakeup_time <= ticks) 
     {
-      // pop the thread from sleep_list 
+      /* Pop the thread from sleep_list. */ 
       list_pop_front (&sleep_list);
       
       ASSERT (is_thread (t));
-      // unblock the thread
+      /* Unblock the thread. */
       thread_unblock(t);
+
+      /* Reorder the ready_list according to priority after interrupt. */
+      intr_yield_on_return();
     } 
     else 
     { 
-      /* if the first thread's wake up time has not yet come
-         then just break the while loop */
+      /* If the first thread's wake up time has not yet come
+         then just break the while loop. */
       break;
     }
   }
@@ -247,8 +253,14 @@ thread_create (const char *name, int priority,
   /* Add to run queue. */
   thread_unblock (t);
 
+  struct list_elem *e;
+
+  /* Reorder the ready_list according to priority. */
+  thread_yield();
+
   return tid;
 }
+
 
 /* Puts the current thread to sleep.  It will not be scheduled
    again until awoken by thread_unblock().
@@ -264,6 +276,17 @@ thread_block (void)
 
   thread_current ()->status = THREAD_BLOCKED;
   schedule ();
+}
+
+/* Returns true if priority of thread A is bigger than priority of thread B, false
+   otherwise. */
+static bool
+compare_priority (const struct list_elem *a_, const struct list_elem *b_, void *aux UNUSED) 
+{
+  const struct thread *a = list_entry (a_, struct thread, elem);
+  const struct thread *b = list_entry (b_, struct thread, elem);
+  
+  return a->priority > b->priority;
 }
 
 /* Transitions a blocked thread T to the ready-to-run state.
@@ -283,7 +306,7 @@ thread_unblock (struct thread *t)
 
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-  list_push_back (&ready_list, &t->elem);
+  list_insert_ordered (&ready_list, &t->elem, (list_less_func *) &compare_priority, NULL);
   t->status = THREAD_READY;
   intr_set_level (old_level);
 }
@@ -352,7 +375,7 @@ thread_yield (void)
 
   old_level = intr_disable ();
   if (curr != idle_thread) 
-    list_push_back (&ready_list, &curr->elem);
+    list_insert_ordered (&ready_list, &curr->elem, (list_less_func *) &compare_priority, NULL);
   curr->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -406,7 +429,7 @@ thread_get_recent_cpu (void)
 /* Returns true if wake up time of thread A is less than wake up time of thread B, false
    otherwise. */
 static bool
-compare (const struct list_elem *a_, const struct list_elem *b_, void *aux UNUSED) 
+compare_time (const struct list_elem *a_, const struct list_elem *b_, void *aux UNUSED) 
 {
   const struct thread *a = list_entry (a_, struct thread, elem);
   const struct thread *b = list_entry (b_, struct thread, elem);
@@ -424,7 +447,7 @@ thread_sleep (int64_t ticks) {
   // get current thread, set its wake up time, and insert into ordered list sleep_list
   struct thread *curr = thread_current ();
   curr->wakeup_time = ticks;
-  list_insert_ordered (&sleep_list, &curr->elem, (list_less_func *) &compare, NULL);
+  list_insert_ordered (&sleep_list, &curr->elem, (list_less_func *) &compare_time, NULL);
   
   // block the thread (change its status to THREAD_BLOCKED), and switch to next thread
   thread_block ();
