@@ -143,6 +143,7 @@ thread_tick (int64_t ticks)
   else
     kernel_ticks++;
 
+  // check if it is time to wake up any threads
   thread_wakeup (ticks);
 
   /* Enforce preemption. */
@@ -159,28 +160,29 @@ thread_wakeup (int64_t ticks) {
   ASSERT(intr_context ());
   // make sure interrupts are turned off
   ASSERT(intr_get_level () == INTR_OFF);
-
-
-  // struct list_elem *e;
-  // for (e = list_begin (&sleep_list); e != list_end (&sleep_list); e = list_next (e))
-  // {
-  //   struct thread* temp = list_entry (e, struct thread, elem);
-  //   printf("%d %d ", temp->tid, (int) temp->wakeup_time);
-  // }
-  // printf("\n");
   
-  while (!list_empty(&sleep_list)) {
+  // check if any sleeping thread's wake up time has come
+  while (!list_empty(&sleep_list)) 
+  {
     struct thread* t = list_entry (list_front (&sleep_list), struct thread, elem);
     ASSERT (is_thread (t));
     ASSERT (t->status == THREAD_BLOCKED);
 
-    if (t->wakeup_time <= ticks) {
-
+    if (t->wakeup_time <= ticks) 
+    {
+      // pop the thread from sleep_list 
       list_pop_front (&sleep_list);
       
       ASSERT (is_thread (t));
+      // unblock the thread
       thread_unblock(t);
-    }else break;
+    } 
+    else 
+    { 
+      /* if the first thread's wake up time has not yet come
+         then just break the while loop */
+      break;
+    }
   }
 } 
 
