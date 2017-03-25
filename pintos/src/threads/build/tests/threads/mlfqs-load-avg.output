@@ -1,0 +1,529 @@
+Writing command line to /tmp/2yJLNUuYjw.dsk...
+squish-pty bochs -q
+Kernel command line: -q -mlfqs run mlfqs-load-avg
+Pintos booting with 4,096 kB RAM...
+374 pages available in kernel pool.
+374 pages available in user pool.
+Calibrating timer...  102,400 loops/s.
+Boot complete.
+Executing 'mlfqs-load-avg':
+(mlfqs-load-avg) begin
+(mlfqs-load-avg) Starting 60 load threads...
+(mlfqs-load-avg) Starting threads took 2 seconds.
+61
+60
+60
+59
+(mlfqs-load-avg) After 0 seconds, load average=0.00.
+60
+59
+59
+58
+58
+57
+(mlfqs-load-avg) After 2 seconds, load average=0.00.
+58
+57
+57
+56
+56
+55
+(mlfqs-load-avg) After 4 seconds, load average=0.00.
+56
+55
+55
+54
+54
+53
+(mlfqs-load-avg) After 6 seconds, load average=0.00.
+54
+53
+53
+52
+52
+51
+(mlfqs-load-avg) After 8 seconds, load average=0.00.
+52
+51
+51
+50
+50
+49
+(mlfqs-load-avg) After 10 seconds, load average=0.00.
+50
+49
+49
+48
+48
+47
+(mlfqs-load-avg) After 12 seconds, 47
+46
+load average=0.00.
+47
+46
+46
+45
+(mlfqs-load-avg) After 14 seconds, 45
+44
+load average=0.00.
+45
+44
+44
+43
+(mlfqs-load-avg) After 16 seconds, 43
+42
+load average=0.00.
+43
+42
+42
+41
+(mlfqs-load-avg) After 18 seconds, 41
+40
+load average=0.00.
+41
+40
+40
+39
+(mlfqs-load-avg) After 20 seconds, 39
+38
+load average=0.00.
+39
+38
+38
+37
+(mlfqs-load-avg) After 22 seconds, 37
+36
+load average=0.00.
+37
+36
+36
+35
+(mlfqs-load-avg) 35
+34
+After34
+33
+ 24 seconds, load average=0.00.
+33
+32
+33
+32
+32
+31
+(mlfqs-load-avg) After 26 seconds, 31
+30
+load average=0.00.
+31
+30
+30
+29
+(mlfqs-load-avg) After 28 seconds, 29
+28
+28
+27
+load average=0.00.
+28
+27
+27
+26
+(mlfqs-load-avg) After 30 seconds, 26
+25
+load average=0.00.
+26
+25
+25
+24
+24
+23
+(mlfqs-load-avg) After 32 seconds, 23
+22
+load average=0.00.
+23
+22
+22
+21
+21
+20
+(mlfqs-load-avg) After 34 seconds, 20
+19
+load average=0.00.
+20
+19
+19
+18
+18
+17
+(mlfqs-load-avg) After 36 seconds, 17
+16
+16
+15
+load average=0.00.
+16
+15
+15
+14
+14
+13
+(mlfqs-load-avg) After 38 seconds, 13
+12
+12
+11
+load average=0.00.
+12
+11
+11
+10
+10
+9
+(mlfqs-load-avg) After 40 seconds, 9
+8
+8
+7
+load average=0.00.
+8
+7
+7
+6
+6
+5
+(mlfqs-load-avg) After 42 seconds, 5
+4
+4
+3
+load average=0.00.
+4
+3
+3
+2
+2
+1
+(mlfqs-load-avg) After 44 seconds, 1
+0
+load average=0.00.
+2
+1
+(mlfqs-load-avg) After 46 seconds, load average=0.00.
+6
+5
+(mlfqs-load-avg) After 48 seconds, load average=0.00.
+10
+9
+(mlfqs-load-avg) After 50 seconds, load average=0.00.
+14
+13
+(mlfqs-load-avg) After 52 seconds, load average=0.00.
+18
+17
+(mlfqs-load-avg) After 54 seconds, load average=0.00.
+21
+20
+(mlfqs-load-avg) After 56 seconds, load average=0.00.
+25
+24
+(mlfqs-load-avg) After 58 seconds, load average=0.00.
+28
+27
+(mlfqs-load-avg) After 60 seconds, load average=0.00.
+30
+29
+(mlfqs-load-avg) After 62 seconds, load average=0.00.
+32
+31
+(mlfqs-load-avg) After 64 seconds, load average=0.00.
+35
+34
+(mlfqs-load-avg) After 66 seconds, load average=0.00.
+37
+36
+(mlfqs-load-avg) After 68 seconds, load average=0.00.
+39
+38
+(mlfqs-load-avg) After 70 seconds, load average=0.00.
+41
+40
+(mlfqs-load-avg) After 72 seconds, load average=0.00.
+43
+42
+(mlfqs-load-avg) After 74 seconds, load average=0.00.
+44
+43
+(mlfqs-load-avg) After 76 seconds, load average=0.00.
+45
+44
+(mlfqs-load-avg) After 78 seconds, load average=0.00.
+46
+45
+(mlfqs-load-avg) After 80 seconds, load average=0.00.
+48
+47
+(mlfqs-load-avg) After 82 seconds, load average=0.00.
+49
+48
+(mlfqs-load-avg) After 84 seconds, load average=0.00.
+50
+49
+(mlfqs-load-avg) After 86 seconds, load average=0.00.
+51
+50
+(mlfqs-load-avg) After 88 seconds, 50
+49
+49
+48
+48
+47
+47
+46
+46
+45
+45
+44
+44
+43
+43
+42
+42
+41
+41
+40
+40
+39
+39
+38
+38
+37
+37
+36
+36
+35
+35
+34
+34
+33
+33
+32
+32
+31
+31
+30
+30
+29
+29
+28
+28
+27
+27
+26
+26
+25
+25
+24
+24
+23
+23
+22
+22
+21
+21
+20
+20
+19
+19
+18
+18
+17
+17
+16
+16
+15
+15
+14
+14
+13
+13
+12
+12
+11
+11
+10
+10
+9
+9
+8
+8
+7
+7
+6
+6
+5
+5
+4
+4
+3
+3
+2
+2
+1
+1
+0
+load ave1
+0
+rage=0.00.
+1
+0
+1
+0
+(mlfqs-load-avg) After 90 seconds, load average=0.00.
+2
+1
+1
+0
+(mlfqs-load-avg) After 92 seconds, load average=0.00.
+1
+0
+1
+0
+(mlfqs-load-avg) After 94 seconds, load average=0.00.
+1
+0
+(mlfqs-l1
+0
+oad-avg) After 96 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 98 seconds, load average=0.00.
+1
+0
+1
+0
+(mlfqs-load-avg) After 100 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 102 seconds, load average=0.00.
+1
+0
+(mlfqs-l1
+0
+oad-avg) After 104 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 106 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 108 seconds, load average=0.00.
+1
+0
+1
+0
+(mlfqs-load-avg) After 110 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 112 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 114 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 116 seconds, load average=0.00.
+1
+0
+(mlfqs-l1
+0
+oad-avg) After 118 seconds, load average=0.00.
+2
+1
+1
+0
+(mlfqs-load-avg) After 120 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 122 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 124 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 126 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 128 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 130 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 132 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 134 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 136 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 138 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 140 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 142 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 144 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 146 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 148 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 150 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 152 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 154 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 156 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 158 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 160 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 162 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 164 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 166 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 168 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 170 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 172 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 174 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 176 seconds, load average=0.00.
+1
+0
+(mlfqs-load-avg) After 178 seconds, load average=0.00.
+(mlfqs-load-avg) end
+Execution of 'mlfqs-load-avg' complete.
+Timer: 18851 ticks
+Thread: 6458 idle ticks, 12396 kernel ticks, 0 user ticks
+Console: 6492 characters output
+Keyboard: 0 keys pressed
+Powering off...
