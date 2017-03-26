@@ -1,4 +1,4 @@
-Writing command line to /tmp/WeE9mQ7bko.dsk...
+Writing command line to /tmp/c3l80WEEvv.dsk...
 squish-pty bochs -q
 Kernel command line: -q run priority-donate-chain
 Pintos booting with 4,096 kB RAM...
@@ -9,7 +9,7 @@ Boot complete.
 Executing 'priority-donate-chain':
 (priority-donate-chain) begin
 (priority-donate-chain) main got lock.
-(priority-donate-chain) main should have priority 3.  Actual priority: 0.
+(priority-donate-chain) main should have priority 3.  Actual priority: 3.
 (priority-donate-chain) interloper 1 finished.
 (priority-donate-chain) main should have priority 6.  Actual priority: 0.
 (priority-donate-chain) interloper 2 finished.
@@ -23,15 +23,32 @@ Executing 'priority-donate-chain':
 (priority-donate-chain) interloper 6 finished.
 (priority-donate-chain) main should have priority 21.  Actual priority: 0.
 (priority-donate-chain) interloper 7 finished.
+(priority-donate-chain) thread 1 got lock
+(priority-donate-chain) thread 1 should have priority 21. Actual priority: 3
+(priority-donate-chain) thread 2 got lock
+(priority-donate-chain) thread 2 should have priority 21. Actual priority: 6
+(priority-donate-chain) thread 3 got lock
+(priority-donate-chain) thread 3 should have priority 21. Actual priority: 9
+(priority-donate-chain) thread 4 got lock
+(priority-donate-chain) thread 4 should have priority 21. Actual priority: 12
+(priority-donate-chain) thread 5 got lock
+(priority-donate-chain) thread 5 should have priority 21. Actual priority: 15
+(priority-donate-chain) thread 6 got lock
+(priority-donate-chain) thread 6 should have priority 21. Actual priority: 18
+(priority-donate-chain) thread 7 got lock
+(priority-donate-chain) thread 7 should have priority 21. Actual priority: 21
+(priority-donate-chain) thread 7 finishing with priority 21.
+(priority-donate-chain) thread 6 finishing with priority 18.
+(priority-donate-chain) thread 5 finishing with priority 15.
+(priority-donate-chain) thread 4 finishing with priority 12.
+(priority-donate-chain) thread 3 finishing with priority 9.
+(priority-donate-chain) thread 2 finishing with priority 6.
+(priority-donate-chain) thread 1 finishing with priority 3.
 (priority-donate-chain) main finishing with priority 0.
-(priority-donate-chain) end(priority-donate-chain) thread 1 got lock
-Kernel PANIC at ../../threads/synch.c:234 in lock_release(): assertion `lock_held_by_current_thread (lock)' failed.
-Call stack: 0xc0107486 0xc0102b5a 0xc010b15b 0xc0100f1e.
-The `backtrace' program can make call stacks useful.
-Read "Backtraces" in the "Debugging Tools" chapter
-of the Pintos documentation for more information.
-Timer: 222 ticks
-Thread: 0 idle ticks, 222 kernel ticks, 0 user ticks
-Console: 1687 characters output
+(priority-donate-chain) end
+Execution of 'priority-donate-chain' complete.
+Timer: 401 ticks
+Thread: 0 idle ticks, 403 kernel ticks, 0 user ticks
+Console: 2627 characters output
 Keyboard: 0 keys pressed
 Powering off...
