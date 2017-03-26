@@ -96,6 +96,10 @@ timer_elapsed (int64_t then)
 void
 timer_sleep (int64_t ticks) 
 {
+  /* Check if ticks is greater than 0. */
+  if (ticks <= 0) 
+    return;
+
   enum intr_level old_level;
 
   // make sure interrupts are turned on

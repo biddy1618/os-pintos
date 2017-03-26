@@ -1,4 +1,4 @@
-Writing command line to /tmp/wQctVYTltK.dsk...
+Writing command line to /tmp/b60CfJFWRR.dsk...
 squish-pty bochs -q
 Kernel command line: -q run priority-donate-one
 Pintos booting with 4,096 kB RAM...
@@ -10,16 +10,13 @@ Executing 'priority-donate-one':
 (priority-donate-one) begin
 (priority-donate-one) This thread should have priority 32.  Actual priority: 32.
 (priority-donate-one) This thread should have priority 33.  Actual priority: 33.
-(priority-donate-one) acquire2: got the lock
-(priority-donate-one) acquire2: done
-(priority-donate-one) acquire1: got the lock
-(priority-donate-one) acquire1: done
-(priority-donate-one) acquire2, acquire1 must already have finished, in that order.
-(priority-donate-one) This should be the last line before finishing this test.
-(priority-donate-one) end
-Execution of 'priority-donate-one' complete.
-Timer: 126 ticks
-Thread: 0 idle ticks, 129 kernel ticks, 0 user ticks
-Console: 899 characters output
+(priority-donate-one) Kernel PANIC at ../../lib/kernel/list.c:84 in list_next(): assertion `is_head (elem) || is_interior (elem)' failed.
+Call stack: 0xc01077b6 0xc01078f9 0xc010848b 0xc0102c37 0xc01095e6 0xc010966d 0xc0105cbb 0xc0109858 0xc010a29b 0xc010982a 0xc010052f 0xc01005f6 0xc010009e.
+The `backtrace' program can make call stacks useful.
+Read "Backtraces" in the "Debugging Tools" chapter
+of the Pintos documentation for more information.
+Timer: 67 ticks
+Thread: 1 idle ticks, 66 kernel ticks, 0 user ticks
+Console: 947 characters output
 Keyboard: 0 keys pressed
 Powering off...

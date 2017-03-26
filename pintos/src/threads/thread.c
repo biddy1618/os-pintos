@@ -305,7 +305,7 @@ thread_unblock (struct thread *t)
 
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-  list_insert_ordered (&ready_list, &t->elem, (list_less_func *) &compare_priority, NULL);
+  list_insert_ordered (&ready_list, &t->elem, (list_less_func *) compare_priority, NULL);
   t->status = THREAD_READY;
   intr_set_level (old_level);
 }
@@ -375,7 +375,7 @@ thread_yield (void)
   old_level = intr_disable ();
 
   if (curr != idle_thread) 
-    list_insert_ordered (&ready_list, &curr->elem, (list_less_func *) &compare_priority, NULL);
+    list_insert_ordered (&ready_list, &curr->elem, (list_less_func *) compare_priority, NULL);
   curr->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -409,7 +409,7 @@ thread_set_priority (int new_priority)
      current thread. */
   old_level = intr_disable ();
   thread_current ()->priority = new_priority;
-  thread_current ()->priority_real = new_priority;
+  thread_current ()->priority_init = new_priority;
   thread_yield();
   
   intr_set_level (old_level);
@@ -474,7 +474,7 @@ thread_sleep (int64_t ticks) {
   // get current thread, set its wake up time, and insert into ordered list sleep_list
   struct thread *curr = thread_current ();
   curr->wakeup_time = ticks;
-  list_insert_ordered (&sleep_list, &curr->elem, (list_less_func *) &compare_time, NULL);
+  list_insert_ordered (&sleep_list, &curr->elem, (list_less_func *) compare_time, NULL);
   
   // block the thread (change its status to THREAD_BLOCKED), and switch to next thread
   thread_block ();
@@ -565,7 +565,8 @@ init_thread (struct thread *t, const char *name, int priority)
   strlcpy (t->name, name, sizeof t->name);
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
-  t->priority_real = priority;
+  t->priority_init = priority;
+  list_init(&t->locks);
   t->magic = THREAD_MAGIC;
 }
 

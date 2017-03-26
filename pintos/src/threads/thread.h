@@ -88,13 +88,15 @@ struct thread
     char name[16];                      /* Name (for debugging purposes). */
     uint8_t *stack;                     /* Saved stack pointer. */
     int priority;                       /* Priority. */
-    int priority_real;                  /* Original priority independent of lock. */
+    int priority_init;                  /* Initial priority of the thread. */
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
-    /* Time when thread should wake up */
-    int64_t wakeup_time;
+    struct list locks;                  /* List of locks current thread has. */
+            
+    int64_t wakeup_time;                /* Thread's wake up time if sleep was 
+                                            invoked. */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
@@ -109,7 +111,6 @@ struct thread
    If true, use multi-level feedback queue scheduler.
    Controlled by kernel command-line option "-o mlfqs". */
 extern bool thread_mlfqs;
-extern struct list ready_list;
 
 
 void thread_init (void);

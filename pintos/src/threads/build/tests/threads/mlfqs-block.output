@@ -1,4 +1,4 @@
-Writing command line to /tmp/xAiBzXdzRL.dsk...
+Writing command line to /tmp/GQraXYACgD.dsk...
 squish-pty bochs -q
 Kernel command line: -q -mlfqs run mlfqs-block
 Pintos booting with 4,096 kB RAM...
@@ -18,8 +18,8 @@ Executing 'mlfqs-block':
 
 (mlfqs-block) end
 Execution of 'mlfqs-block' complete.
-Timer: 3088 ticks
-Thread: 488 idle ticks, 2604 kernel ticks, 0 user ticks
+Timer: 3090 ticks
+Thread: 490 idle ticks, 2603 kernel ticks, 0 user ticks
 Console: 775 characters output
 Keyboard: 0 keys pressed
 Powering off...
