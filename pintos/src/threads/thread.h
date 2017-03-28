@@ -94,9 +94,11 @@ struct thread
     struct list_elem elem;              /* List element. */
 
     struct list locks;                  /* List of locks current thread has. */
+    struct lock *lock;                  /* Lock on which current thread is 
+                                           waiting. */
             
     int64_t wakeup_time;                /* Thread's wake up time if sleep was 
-                                            invoked. */
+                                           invoked. */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

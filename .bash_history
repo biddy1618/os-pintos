@@ -1,153 +1,3 @@
-pintos -v --bochs -- -q --gdb run alarm-single
-pintos -v --bochs -- -q -- --gdb run alarm-single
-pintos -v --bochs -- -q -- gdb run alarm-single
-pintos -v --bochs --gdb -q - run alarm-single
-exit
-gdb
-cd pintos/src/threads/
-make
-pintos -v --bochs -- -q --gdb -- run alarm-single
-pintos --g
-exit
-cd pintos/src/threads/
-ps aux
-ps aux | grep bochs
-ps aux | grep bochs | grep 2a
-kill -9 11896
-kill -9 11960
-kill -9 11980
-ps aux | grep bochs | grep 2a
-pintos --bochs --q
-exit
-pintos -h
-cd pintos/src/threads/
-pintos -h
-pintos --h
--h
-pintos -h
-pintos -help
-pintos -h
-pintos
-pintos -v -- --bochs -- -q run alarm-single
-ps aux | grep bochs
-kill -9 12062
-kill -9 12126
-kill -9 12146
-ps aux | grep bochs
-ps aux | grep bochs | grep 2a
-pintos
-pintos -q --bochs -- -v run alarm-single
-pintos -v --bochs -- -q run alarm-single
-pintos
-pintos --gdb -- run alarm-single
-ps aux | grep bochs
-pintos --gdb -- run alarm-singelT
-pintos --gdb -- run alarm-single
-clear
-ps aux | grep bochs
-clear
-pintos --gdb -- run alarm-single
-ps aux | grep bochs
-pintos --gdb -- run alarm-multiple
-pintos --gdb
-pintos --gdb --
-pintos -v --gdb -- -q run alarm-single
-pintos -v --bochs -- --gdb -- -q run alarm-single
-clear
-pintos -v --bochs --gdb -- -q run alarm-single
-pintos -v --gdb -- -q run alarm-single
-cd pintos/src/threads/
-cd build/
-pitnos-gdb kernel.o
-pintos-gdb kernel.o
-ps aux | grep 2a
-ps aux | grep bochs
-pintos-gdb kernel.o
-cd pintos/src/threads/
-make
-pintos -v --bochs -- -q run alarm-single
-backtrace ./build/kernel.o  0xc0109346 0xc010931a 0xc010921a 0xc010052f 0xc01005f6 0xc010009e
-make
-pintos -v --bochs -- -q run alarm-single
-exit
-cd pintos/src/threads/
-make
-pintos -v -- -q run alarm-single
-cd pintos/src/threads/
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-backtrace ./build/kernel.0 0xc01071c6 0xc01016b8 0xc010184b 0xc0106c31 0xc0105a4c 0xc010909e 0xc01056cb 0xc0103825 0xc0101675 0xc010184b 0xc01010bd 0xc010106e 0xc01024d7 0xc0102791 0xc0108ff6 0xc010907d 0xc01056cb 0xc0103608 0xc010008a
-backtrace ./build/kernel.o 0xc01071c6 0xc01016b8 0xc010184b 0xc0106c31 0xc0105a4c 0xc010909e 0xc01056cb 0xc0103825 0xc0101675 0xc010184b 0xc01010bd 0xc010106e 0xc01024d7 0xc0102791 0xc0108ff6 0xc010907d 0xc01056cb 0xc0103608 0xc010008a
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-ps aux
-ps aux | grep bochs
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-backtrace build/kernel.o 0xc01072a6 0xc0100a3c 0xc0100845 0xc01007f1 0xc0103922 0xc01017c5 0xc010199b 0xc0100d73 0xc0100dbc
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-cd build/
-make check
-cd ..
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-clear
-
-pintos -v -- -q run alarm-single
-cd build/
-make check
-cd ..
-make clean
-make
-cd build/
-cd ..
-pintos -v -- -q run alarm-single
-make clean
-make
-pintos -v -- -q run alarm-single
-exit
-cd pintos/src/threads/
-make
-clean
-make clean
 make
 pintos -v -- -q run alarm-single
 make
@@ -498,3 +348,153 @@ make check
 pintos -v -- -q run priority-donate-one
 pintos -v -- -q run priority-donate-sema
 cd ~
+cd pintos/src/threads/
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make check
+cd make
+git add .
+git status
+git ignore
+git help gitignore
+git commit -m "Some changes in priority donation"
+git push -u origin master
+make
+pintos -v -- -q run priority-donate-one
+pintos -v -- -q run priority-donate-multiple
+make
+pintos -v -- -q run priority-donate-multiple
+make check
+pintos -v -- -q run priority-donate-one
+make check
+make
+pintos -v -- -q run priority-donate-one
+pintos -v -- -q run priority-donate-multiple
+make
+pintos -v -- -q run priority-donate-multiple
+make
+pintos -v -- -q run priority-donate-multiple
+make
+pintos -v -- -q run priority-donate-multiple
+make
+pintos -v -- -q run priority-donate-multiple
+pintos -v -- -q run priority-donate-one
+pintos -v -- -q run priority-donate-multiple2
+pintos -v -- -q run priority-donate-one
+make check
+make 
+make check
+pintos -v -- -q run priority-donate-one
+make check
+make
+pintos -v -- -q run priority-donate-one
+make
+make check
+pintos -v -- -q run priority-donate-one
+pintos -v -- -q run priority-donate-multiple
+pintos -v -- -q run priority-donate-
+pintos -v -- -q run priority-donate-nest
+make
+pintos -v -- -q run priority-donate-multiple
+pintos -v -- -q run priority-donate-one
+pintos -v -- -q run priority-donate-multiple2
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+backtrace build/kernel.o 0xc0107716 0xc0108360 0xc0102be8 0xc0101314 0xc0100749 0xc0100036D
+make
+pintos -v -- -q run priority-donate-one
+backtrace build/kernel.o 
+backtrace build/kernel.o 0xc0107716 0xc01077ea 0xc0107dc8 0xc0102d80 0xc010132e 0xc0100749 0xc0100036
+make
+pintos -v -- -q run priority-donate-one
+backtrace build/kernel.o 0xc0107716 0xc0107d1f 0xc0102a93 0xc01083df 0xc0102be8 0xc010322b 0xc01032e1 0xc01009fb 0xc010a18d 0xc010978a 0xc010052f 0xc01005f6 0xc010009e
+make
+pintos -v -- -q run priority-donate-one
+backtrace build/kernel.o 
+backtrace build/kernel.o 0xc0107756 0xc010782a 0xc0107e08 0xc0107d2f 0xc0102dcb 0xc010328f 0xc0103319 0xc01009fb 0xc010a1cd 0xc01097ca 0xc010052f 0xc01005f6 0xc010009e
+make
+pintos -v -- -q run priority-donate-one
+backtrace build/kernel.o 0xc0107756 0xc01019d8 0xc0101b6b 0xc0107841 0xc010842b 0xc0102c1f 0xc0109586 0xc010960d 0xc0105c5b 0xc01097f8 0xc010a23b 0xc01097ca 0xc010052f 0xc01005f6 0xc010009e
+backtrace build/kernel.o 0xc0107716 0xc0107d1f 0xc0102a93 0xc01083df 0xc0102be8 0xc010322b 0xc01032e1 0xc01009fb 0xc010a18d 0xc010978a 0xc010052f 0xc01005f6 0xc010009e
+make
+ps aux | grep bochs
+ps aux | grep bochs | grep 2
+ps aux | grep bochs | grep 2a
+ps aux | grep bochs | grep 2b
+make
+pintos -v -- -q run priority-donate-one
+pintos -v -- -q run priority-donate-multiple
+pintos -v -- -q run priority-donate-multiple2
+make check
+pintos -v -- -q run alarm-single
+pintos -v -- -q run priority-donate-nest
+m
+pintos -v -- -q run priority-donate-nest
+pintos -v -- -q run alarm-single
+make check
+make
+make check
+make
+make check
+cd ~
+git add .
+git commit -m "Few changes on the priority"
+git push -u origin master
+cd pintos/src/threads/
+pintos -v -- -q run priority-donate-one
+backtrace build/kernel.o 0xc01077b6 0xc01078f9 0xc010848b 0xc0102c37 0xc01095e6 0xc010966d 0xc0105cbb 0xc0109858 0xc010a29b 0xc010982a 0xc010052f 0xc01005f6 0xc010009e
+make
+pintos -v -- -q run priority-donate-one
+pintos -v -- -q run priority-donate-nest
+pintos -v -- -q run priority-donate-one
+backtrace build/kernel.o 0xc01077b6 0xc01078f9 0xc010848b 0xc0102c37 0xc01095e6 0xc010966d 0xc0105cbb 0xc0109858 0xc010a29b 0xc010982a 0xc010052f 0xc01005f6 0xc010009e
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make grade
+make check
+pintos -v -- -q run priority-donate-one
+cd pintos/src/threads/
+pintos-gdb build/kernel.o
+cd pintos/src/threads/
+pintos -v -- -q run priority-donate-one
+pintos ---gdb --- -v -- -q run priority-donate-one
+pintos --gdb -- -v -- -q run priority-donate-one
+pintos -v -- --gdb --  -q run priority-donate-one
+pintos -v --gdb -- -q run priority-donate-one
+pintos -v --gdb -- -q run priority-donate-multiple
+cd pintos/src/threads/
+pintos-gdb ./build/kernel.o
+exit
+cd pintos/src/threads/
+make
+make clear
+make
+pintos -v --gdb -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+clear
+ps -au |grep bochs
+ps -au | grep bochs
+pintos -v -- -q run priority-donate-one
+exit

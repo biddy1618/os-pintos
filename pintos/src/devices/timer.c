@@ -102,14 +102,14 @@ timer_sleep (int64_t ticks)
 
   enum intr_level old_level;
 
-  // make sure interrupts are turned on
+  /* Make sure interrupts are turned on. */
   ASSERT (intr_get_level () == INTR_ON);
-  // make sure the interrupt is internal
+  /* Make sure the interrupt is internal. */
   ASSERT (!intr_context ());
 
-  // turn off interupts and proceed to thread sleep
+  /* Turn off interupts and proceed to thread sleep. */
   old_level = intr_disable ();
-  thread_sleep (timer_ticks() + ticks);
+  thread_sleep (timer_ticks () + ticks);
   intr_set_level (old_level);
 }
 

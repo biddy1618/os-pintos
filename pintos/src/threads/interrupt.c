@@ -363,7 +363,7 @@ intr_handler (struct intr_frame *frame)
     {
       /* There is no handler, but this interrupt can trigger
          spuriously due to a hardware fault or hardware race
-         condition.  Ignore it. */
+         condition. Ignore it. */
     }
   else 
     {
