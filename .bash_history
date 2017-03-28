@@ -1,115 +1,3 @@
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-backtrace ./build/kernel.o 0xc01072f6 0xc0109415 0xc0109746 0xc010946a 0xc010936a 0xc010052f 0xc01005f6 0xc010009e
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-make clean
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-make
-pintos -v -- -q run alarm-single
-MAKE CLEAN
-make clean
-make
-cd build/
-make check
-cd ..
-pintos -v -- -q run alarm-multiple
-pintos -v -- -q run alarm-priority
-cd ~
-ls
-cd pintos/
-ls
-ls -all
-cd ..
-ls -all
-git init
-cd pintos/src/threads/
-make
-pintos -v -- -q run alarm-multiple
-pintos -v -- -q run alarm-zero
-cd ..
-git
-git status
-git add .
-git commit -m "First commit with implemented sleep procedure"
-git config --global user.email "biddy.as.diddy@gmail.com"
-git config --global user.name "biddy1618"
-git commit -m "First commit with implemented sleep procedure"
-git push
-git remote add origin https://github.com/biddy1618/os-pintos.git
-git push
-git push -u origin master
-git remote add origin https://github.com/biddy1618/os-pintos.git
-git push -u origin master
-git remote add origin https://github.com/biddy1618/os-pintos.gi
-git push -u origin master
-git remote add origin git@github.com:biddy1618/os-pintos.git
-git remote rm origin
-git remote add origin git@github.com:biddy1618/os-pintos.git
-git push -u origin master
-git remote rm originssh -vT git@github.com
-ssh -vT git@github.com
-eval "$(ssh-agent -s)"
-ssh-add -l
-ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
-ssh-keygen -t rsa -b 4096 -C "biddy.as.diddy@gmail.com"
-eval "$(ssh-agent -s)"
-git push -u origin master
-git remote add origin git@github.com:biddy1618/os-pintos.git
-ssh -vT git@github.com
-ssh -T billy.anyteen@github.com
-ssh -T git@github.com
-eval "$(ssh-agent -s)"
-ssh-add -l
-ssh-keygen -t rsa -b 4096 -C "biddy.as.diddy@gmail.com"
-cd pintos/src/threads/
-make
-pintos -v -- -q run alarm-single
-ls
-cd ..
-ls
-ls -al
-rm -r .git
-rm -r -v .git/
-rm
-rm --hlp
-rm --help
-rm -r -f .git/
-ls -all
-rm -r -f .ssh/
-ls -all
-rm -r -f .gitconfig 
-ls -all
-git init
-git config --global http.sslverify false
-git config --global user.email "biddy.as.diddy@gmail.com"
-git config --global user.name "biddy1618"
 git remote add origin https://github.com/biddy1618/os-pintos.git
 git add .
 git commit -m "First comming with implemented thread sleep procedure"
@@ -498,3 +386,115 @@ ps -au |grep bochs
 ps -au | grep bochs
 pintos -v -- -q run priority-donate-one
 exit
+cd pintos/src/threads/
+make
+pintos -v -- -q run priority-donate-one
+backtrace build/kernel.o 0xc0107756 0xc0107d5f 0xc0102db0 0xc0103293 0xc010331d 0xc01009fb 0xc010a1cd 0xc01097ca 0xc010052f 0xc01005f6 0xc010009e
+make
+pintos -v -- -q run priority-donate-one
+make check
+make
+pintos -v -- -q run priority-donate-one
+make check
+make
+pintos -v -- -q run priority-donate-one
+make check
+make
+pintos -v -- -q run priority-donate-one
+make check
+make
+make check
+make
+make check
+make
+make check
+make
+make clear
+make clean
+make
+make check
+cd ~
+git add .
+git status
+git add .
+git status
+git reset
+git status
+git add .
+git status
+git ignore
+git --help
+git reset
+git rm -r --cache .
+git add .
+git status
+git commit -m "Some changes to synch. 11 tests still fail. 4 of them from donation."
+git push -u origin master
+cd pintos/src/trh
+cd pintos/src/threads/
+make check
+make
+make check
+make
+make check
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+backtrace build/kernel.o 0xc0107766 0xc01019e8 0xc0101b7b 0xc01027f7 0xc0100798 0xc010007f
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+backtrace build/kernel.o 0xc0107766 0xc01019e8 0xc0101b7b 0xc01027f7 0xc0100798 0xc010007f
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+backtrace build/kernel.o 0xc01077c6 0xc01019e8 0xc0101b7b 0xc0102851 0xc0102c48 0xc010a307 0xc0100f7c
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+pintos -v -- -q run priority-donate-lower
+make
+pintos -v -- -q run priority-donate-lower
+make
+pintos -v -- -q run priority-donate-lower
+make
+pintos -v -- -q run priority-donate-lower
+cd pintos/src/threads/
+make
+make check
+make
+make check
+pintos -v -- -q run priority-donate-one
+make
+pintos -v -- -q run priority-donate-one
+make check

@@ -393,11 +393,34 @@ thread_set_priority (int new_priority)
   
   ASSERT (!intr_context ());
 
-  /* If the priority of the current is lowered, then yield
-     current thread. */
   old_level = intr_disable ();
-  thread_current ()->priority = new_priority;
+  
   thread_current ()->priority_init = new_priority;
+  /* If the priority of the current is lowered, then check
+     if any thread that is waiting on the lock current thread
+     posessing has priority higher than new priority, if so,
+     change initial priority to new priority, otherwise change
+     priority to new priority and yield. */
+  struct list_elem *el = list_begin(&thread_current ()->locks); 
+  struct thread *temp;
+  struct list *wait_threads;
+  while (el != list_end (&thread_current ()->locks))
+  {
+    wait_threads = &(list_entry (el, struct lock, elem)
+                                    ->semaphore.waiters);
+    /* Check the priority of the first thread waiting for 
+       a lock. Since the list is sorted, the first one is 
+       supposed to have the highest priority. */
+    if (!list_empty (wait_threads) && 
+      (temp = list_entry (list_front (wait_threads), 
+      struct thread, elem))->priority > new_priority)
+    {
+      intr_set_level (old_level);
+      return;
+    }
+    el = list_next(el);
+  }
+  thread_current ()->priority = new_priority;
   thread_yield();
   
   intr_set_level (old_level);
