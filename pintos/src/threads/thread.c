@@ -76,9 +76,13 @@ static void schedule (void);
 void schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
 
+static bool compare_time (const struct list_elem *, 
+                      const struct list_elem *, 
+                      void *);
+bool compare_priority (const struct list_elem *, 
+                      const struct list_elem *, 
+                      void *);
 void thread_wakeup (int64_t);
-bool compare_priority (const struct list_elem *, const struct list_elem *, void *);
-static bool compare_time (const struct list_elem *, const struct list_elem *, void *);
 
 
 /* Initializes the threading system by transforming the code
@@ -308,6 +312,7 @@ thread_unblock (struct thread *t)
   list_insert_ordered (&ready_list, &t->elem, 
                       (list_less_func *) compare_priority, 
                       NULL);
+  t->list = &ready_list;
   t->status = THREAD_READY;
   intr_set_level (old_level);
 }
@@ -376,10 +381,12 @@ thread_yield (void)
 
   old_level = intr_disable ();
 
-  if (curr != idle_thread) 
+  if (curr != idle_thread) {
     list_insert_ordered (&ready_list, &curr->elem, 
                         (list_less_func *) compare_priority, 
                         NULL);
+    curr->list = &ready_list;
+  }
   curr->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -585,6 +592,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->priority_init = priority;
   t->lock = NULL;
+  t->list = NULL;
   t->magic = THREAD_MAGIC;
 }
 
@@ -679,6 +687,8 @@ schedule (void)
   ASSERT (curr->status != THREAD_RUNNING);
   ASSERT (is_thread (next));
 
+  if (next != idle_thread)
+    next->list = NULL;
   if (curr != next)
     prev = switch_threads (curr, next);
   schedule_tail (prev); 

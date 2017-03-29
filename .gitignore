@@ -43,11 +43,14 @@
 *.pdb
 *.output
 *.result
+*.txt
 
 # Kernel Module Compile Results
 *.mod*
 *.cmd
+*.bin
 modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+.bash_history

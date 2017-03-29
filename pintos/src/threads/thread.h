@@ -96,6 +96,10 @@ struct thread
     struct list locks;                  /* List of locks current thread has. */
     struct lock *lock;                  /* Lock on which current thread is 
                                            waiting. */
+
+    struct list *list;                  /* The list current thread is residing,
+                                           if any, that is sorted according to
+                                           priority. */
             
     int64_t wakeup_time;                /* Thread's wake up time if sleep was 
                                            invoked. */
