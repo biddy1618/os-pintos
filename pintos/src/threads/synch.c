@@ -209,27 +209,6 @@ priority_donate (void)
   struct lock *l = t->lock;
   int new_priority = t->priority;
 
-  // /* Traverse the list of all held locks for thread t and
-  //    pick the highest priority among holders. */
-  // struct list_elem *elem = list_begin(&t->locks); 
-  // struct thread *temp;
-  // struct list *wait_threads;
-  // while (elem != list_end (&t->locks))
-  // {
-  //   wait_threads = &(list_entry (elem, struct lock, elem)
-  //                                   ->semaphore.waiters);
-  //   /* Check the priority of the first thread waiting for 
-  //      a lock. Since the list is sorted, the first one is 
-  //      supposed to have the highest priority. */
-  //   if (!list_empty (wait_threads) && 
-  //     (temp = list_entry (list_front (wait_threads), 
-  //     struct thread, elem))->priority > new_priority)
-  //   {
-  //     new_priority = temp->priority;
-  //   }
-  //   elem = list_next(elem);
-  // }
-
   /* Update the priorities of the thread that is holder
      of the current lock, and check if it is waiting for
      other thread, and if so, update it too, and continue
