@@ -1,0 +1,5 @@
+[http]
+	sslverify = false
+[user]
+	email = biddy.as.diddy@gmail.com
+	name = biddy1618
