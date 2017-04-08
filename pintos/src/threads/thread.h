@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "threads/synch.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -93,6 +94,11 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
+    struct list children;               /* List of children processes (threads to
+                                           to be exact). */
+
+    struct thread *parent;              /* Parent of user program. */
+      
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
@@ -102,6 +108,29 @@ struct thread
     unsigned magic;                     /* Detects stack overflow. */
   };
 
+/* Struct for keeping information about the child process. Stored
+   as a list element */
+struct child_meta
+  {
+    tid_t tid;                          /* ID of the thread (or process, howerver 
+                                           you call, in PintOS they are same). */
+    int status;                         /* Status in case of set by child thread
+                                           in case of termination. */
+    bool wait;                          /* Boolean to check if the thread is being
+                                           waited by some other thread, probably
+                                           parent. */
+    struct thread *child;               /* Pointer to child process. */
+    struct semaphore finished;          /* Semaphore in case parent needs to wait
+                                           for child to terminate. */
+    struct list_elem elem;              /* List element that is linked to parent's
+                                           children list. */
+  };
+
+bool is_child (tid_t, struct thread *);
+struct child_meta *get_child (tid_t, struct thread *);
+bool remove_child (tid_t, struct thread *);
+void set_status (int);
+
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
    Controlled by kernel command-line option "-o mlfqs". */
@@ -109,7 +138,6 @@ extern bool thread_mlfqs;
 
 void thread_init (void);
 void thread_start (void);
-
 void thread_tick (void);
 void thread_print_stats (void);
 

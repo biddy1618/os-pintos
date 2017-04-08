@@ -44,6 +44,7 @@
 *.output
 *.result
 *.txt
+*.errors
 
 # Kernel Module Compile Results
 *.mod*
@@ -54,3 +55,4 @@ Module.symvers
 Mkfile.old
 dkms.conf
 .bash_history
+original_pintos/
