@@ -72,9 +72,29 @@ static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
 
-static void child_add (struct thread *);
+static void add_child (struct thread *);
 
 #define START_FD 2;
+
+/* Add child to current thread. */
+void 
+add_child (struct thread *t) 
+{
+  /* Set the parent of created thread as current thread. */
+  t->parent = thread_current ();
+
+  /* Allocate memory for meta information of child, in case it terminates
+     and parent process needs its information. */
+  struct child_meta *cm = malloc (sizeof (struct child_meta));
+  cm->tid = t->tid;
+  cm->status = 0;
+  cm->wait = false;
+  cm->child = t;
+  sema_init (&cm->finished, 0);
+
+  /* Push the created thread into the children list of current thread. */
+  list_push_back (&running_thread ()->children, &cm->elem);
+}
 
 /* Checks if given thread ID is child of given thread. */
 bool 
@@ -182,9 +202,29 @@ set_status (int status)
   sema_up (&cm->finished);
 }
 
+/* Deallocate all the children meta information. */
+void
+clear_children (void) 
+{
+  struct list *children = &thread_current ()->children;
+  struct list_elem *e;
+
+  /* Iterate over all children of current thread. */
+  for (e = list_begin (children); e != list_end (children);
+   e = list_next (e))
+  {
+    struct child_meta *cm = list_entry (e, struct child_meta, elem);
+
+
+    /* Remove from the list and deallocate child meta. */
+    list_remove (&cm->elem);
+    free (cm);
+  }
+}
+
 /* Add file as opened to current thread. */
 int
-file_add (struct file *f)
+add_file (struct file *f)
 {
   /* Allocate file meta for current file. */
   struct file_meta *fm = malloc (sizeof (struct file_meta));
@@ -201,7 +241,7 @@ file_add (struct file *f)
 /* Get the file meta information with given fd. Returns 
    NULL if no such fd acquired exists. */
 struct file *
-file_get (int fd)
+get_file (int fd)
 {
   struct list *files = &thread_current ()->files;
   struct list_elem *e;
@@ -221,7 +261,7 @@ file_get (int fd)
 /* Remove the file meta information with given fd. Returns
    NULL if no such fd acquaired exists. */
 struct file *
-file_remove (int fd)
+remove_file (int fd)
 {
   struct list *files = &thread_current ()->files;
   struct list_elem *e;
@@ -246,25 +286,31 @@ file_remove (int fd)
   return NULL;
 }
 
-
-/* Add child to current thread. */
-void 
-child_add (struct thread *t) 
+/* Deallocate all the file meta information, and close if open. */
+void
+clear_files (void) 
 {
-  /* Set the parent of created thread as current thread. */
-  t->parent = thread_current ();
+  struct list *files = &thread_current ()->files;
+  struct list_elem *e;
 
-  /* Allocate memory for meta information of child, in case it terminates
-     and parent process needs its information. */
-  struct child_meta *cm = malloc (sizeof (struct child_meta));
-  cm->tid = t->tid;
-  cm->status = -1;
-  cm->wait = false;
-  cm->child = t;
-  sema_init (&cm->finished, 0);
+  /* Iterate over all files meta objects. */
+  for (e = list_begin (files); e != list_end (files);
+   e = list_next (e))
+  {
+    struct file_meta *fm = list_entry (e, struct file_meta, elem);
 
-  /* Push the created thread into the children list of current thread. */
-  list_push_back (&running_thread ()->children, &cm->elem);
+    /* Close file, if opened. BUG: compiler says file_close if 
+       not found. */
+    
+    // if (fm->file != NULL)
+    // {
+    //   file_close (fm->file);
+    // }
+
+    /* Remove from the list and deallocate file meta. */
+    list_remove (&fm->elem);
+    free (fm);
+  }
 }
 
 /* Initializes the threading system by transforming the code
@@ -383,7 +429,7 @@ thread_create (const char *name, int priority,
   init_thread (t, name, priority);
   tid = t->tid = allocate_tid ();
   /* Add child. */
-  child_add (t);
+  add_child (t);
   // printf("%d check of the list is empty in thread create\n", list_empty (&t->children));
 
 

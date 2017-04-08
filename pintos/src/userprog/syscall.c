@@ -9,6 +9,9 @@
 #include "filesys/filesys.h"
 #include "filesys/file.h"
 #include "devices/input.h"
+#include "threads/vaddr.h"
+#include "userprog/pagedir.h"
+
 
 static void syscall_handler (struct intr_frame *);
 
@@ -196,10 +199,17 @@ syscall_handler (struct intr_frame *f UNUSED)
 
 }
 
-/* Get the value from stack that is placed as size of integer. */
+/* Get the value from stack that is placed as size of integer. Check if 
+   the pointer obtained belongs to user virtual address. */
 int
 get_arg (void *esp)
-{
+{	
+	if (!is_user_vaddr (esp) || 
+		!pagedir_get_page (thread_current ()->pagedir, esp))
+	{
+		sys_exit (EXIT_FAILURE);
+	}
+
 	return *((int *) esp);
 }
 
@@ -211,7 +221,6 @@ sys_exit (int status)
 	/* Print exit message. */
 	printf ("%s: exit(%d)\n", thread_name (), status);
 	set_status (status);
-	// printf("finish\n");
 	thread_exit ();
 }
 
@@ -274,7 +283,7 @@ sys_open (char *file)
 	/* TODO: Check the validity of file. */
 
 	/* Add the file as opened file to thread, and return fd. */
-	int fd = file_add (f);
+	int fd = add_file (f);
 	return fd;
 }  
 
@@ -286,7 +295,7 @@ int
 sys_filesize (int fd)
 {
 	/* Get the opened file by current thread. */
-	struct file *f = file_get (fd);
+	struct file *f = get_file (fd);
 
 	/* If current thread doesn't own the file, then return 0. */
 	if (f == NULL) return -1;
@@ -325,7 +334,7 @@ sys_read (int fd, char *buf, unsigned size)
 
 	/* Otherwise it is file descriptor. Get the opened file by 
 	   current thread. */
-	struct file *f = file_get (fd);
+	struct file *f = get_file (fd);
 
 	/* If current thread doesn't own the file, then return 0. */
 	if (f == NULL) return -1;
@@ -359,7 +368,7 @@ sys_write (int fd, char *buf, unsigned size)
 	
 	/* Otherwise it is file descriptor. Get the opened file by 
 	   current thread. */
-	struct file *f = file_get (fd);
+	struct file *f = get_file (fd);
 
 	/* If current thread doesn't own the file, then return error. */
 	if (f == NULL) return -1;
@@ -381,7 +390,7 @@ sys_seek (int fd, unsigned pos)
 
 	/* Otherwise it is file descriptor. Get the opened file by 
 	   current thread. */
-	struct file *f = file_get (fd);
+	struct file *f = get_file (fd);
 
 	/* If current thread doesn't own the file, then return error. */
 	if (f == NULL) return;
@@ -403,7 +412,7 @@ sys_tell (int fd)
 
 	/* Otherwise it is file descriptor. Get the opened file by 
 	   current thread. */
-	struct file *f = file_get (fd);
+	struct file *f = get_file (fd);
 
 	/* If current thread doesn't own the file, then return error. */
 	if (f == NULL) return -1;
@@ -424,7 +433,7 @@ sys_close (int fd)
 
 	/* Otherwise it is file descriptor. Remove the file meta
 	   struct. */
-	struct file *f = file_remove (fd);
+	struct file *f = remove_file (fd);
 	
 	/* If failed, then return error. */
 	if (f == NULL) return;

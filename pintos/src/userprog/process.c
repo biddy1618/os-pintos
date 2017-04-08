@@ -208,7 +208,27 @@ process_exit (void)
 
   /* TODO: Clear its child processes meta information - child_meta,
      or, if they are still running make it so that they are 
-     inherited by initial thread. */ 
+     inherited by initial thread. */
+
+  /* Free the semaphore, in case parent waits for it. */
+  struct child_meta *cm = get_child (cur->tid, cur->parent);
+  /* If child meta still exists, free its lock. NOTE: Some 
+     SPAGHETTI code. */
+  if (sema_try_down (&cm->finished)) 
+  {
+    sema_up (&cm->finished);
+  }
+  else
+  {
+    sema_up (&cm->finished);
+  }
+
+
+  /* Deallocate all the child meta information of current thread. */
+  // clear_children ();
+
+  /* Deallocate all the files meta information of current thread. */
+  // clear_files ();
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */

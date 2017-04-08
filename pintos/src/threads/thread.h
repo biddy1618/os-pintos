@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include "threads/synch.h"
 
-#include "filesys/file.h"
+// #include "filesys/file.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -151,9 +151,11 @@ bool is_child (tid_t, struct thread *);
 struct child_meta *get_child (tid_t, struct thread *);
 bool remove_child (tid_t, struct thread *);
 void set_status (int);
-int file_add (struct file *);
-struct file *file_get (int);
-struct file *file_remove (int);
+void clear_children (void);
+int add_file (struct file *);
+struct file *get_file (int);
+struct file *remove_file (int);
+void clear_files (void);
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
