@@ -24,7 +24,6 @@ static thread_func start_process NO_RETURN;
 static bool load (const char **parsed_cmdline, 
               void (**eip) (void), void **esp);
 
-#define WORD_SIZE 4;
 static char **parse_args (char *args);
 
 /* Parses the given args, creating an array of char pointers to

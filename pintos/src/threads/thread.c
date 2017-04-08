@@ -74,6 +74,8 @@ static tid_t allocate_tid (void);
 
 static void child_add (struct thread *);
 
+#define START_FD 2;
+
 /* Checks if given thread ID is child of given thread. */
 bool 
 is_child (tid_t tid, struct thread *t)
@@ -157,27 +159,6 @@ remove_child (tid_t tid, struct thread *t)
   return false;
 }
 
-/* Add child to current thread. */
-static void 
-child_add (struct thread *t) 
-{
-  /* Set the parent of created thread as current thread. */
-  t->parent = thread_current ();
-
-  /* Allocate memory for meta information of child, in case it terminates
-     and parent process needs its information. */
-  struct child_meta *cm = malloc (sizeof (struct child_meta));
-  cm->tid = t->tid;
-  cm->status = -1;
-  cm->wait = false;
-  cm->child = t;
-  sema_init (&cm->finished, 0);
-
-  /* Push the created thread into the children list of current thread. */
-  list_push_back (&running_thread ()->children, &cm->elem);
-}
-
-
 /* Set the status for meta data of current thread for the parent,
    and also up the semaphore for any process that is waiting on
    this thread. This function should be called when thread
@@ -199,6 +180,91 @@ set_status (int status)
   /* Sema up the semaphore that is used to indicate whether this
      thread has been finished, or not. Used by parent process. */
   sema_up (&cm->finished);
+}
+
+/* Add file as opened to current thread. */
+int
+file_add (struct file *f)
+{
+  /* Allocate file meta for current file. */
+  struct file_meta *fm = malloc (sizeof (struct file_meta));
+
+  /* Initialize the file meta for current thread and add file
+     meta to the thread's files list. */
+  fm->fd = thread_current ()->fd++;
+  fm->file = f;
+  list_push_back (&thread_current ()->files, &fm->elem);
+
+  return fm->fd;
+}
+
+/* Get the file meta information with given fd. Returns 
+   NULL if no such fd acquired exists. */
+struct file *
+file_get (int fd)
+{
+  struct list *files = &thread_current ()->files;
+  struct list_elem *e;
+
+  /* For each file, check if it has tid same as given tid. */
+  for (e = list_begin (files); e != list_end (files);
+   e = list_next (e))
+  {
+    struct file_meta *fm = list_entry (e, struct file_meta, elem);
+    /* If found, return child meta information. */
+    if (fm->fd == fd) return fm->file;
+  }
+  /* Otherwise return NULL. */
+  return NULL;
+}
+
+/* Remove the file meta information with given fd. Returns
+   NULL if no such fd acquaired exists. */
+struct file *
+file_remove (int fd)
+{
+  struct list *files = &thread_current ()->files;
+  struct list_elem *e;
+
+  /* For each file, check if it has tid same as given tid. */
+  for (e = list_begin (files); e != list_end (files);
+   e = list_next (e))
+  {
+    struct file_meta *fm = list_entry (e, struct file_meta, elem);
+    /* If found, remove it from list, and free allocated resourses. */
+    if (fm->fd == fd)
+    {
+      struct file *f = fm->file;
+      list_remove (&fm->elem);
+      free (fm);
+
+      /* Return file pointer. */
+      return f;
+    }
+  }
+  /* Otherwise return NULL. */
+  return NULL;
+}
+
+
+/* Add child to current thread. */
+void 
+child_add (struct thread *t) 
+{
+  /* Set the parent of created thread as current thread. */
+  t->parent = thread_current ();
+
+  /* Allocate memory for meta information of child, in case it terminates
+     and parent process needs its information. */
+  struct child_meta *cm = malloc (sizeof (struct child_meta));
+  cm->tid = t->tid;
+  cm->status = -1;
+  cm->wait = false;
+  cm->child = t;
+  sema_init (&cm->finished, 0);
+
+  /* Push the created thread into the children list of current thread. */
+  list_push_back (&running_thread ()->children, &cm->elem);
 }
 
 /* Initializes the threading system by transforming the code
@@ -612,6 +678,8 @@ init_thread (struct thread *t, const char *name, int priority)
   // printf("Initiated the children of thread %s, which is child of %s\n", t->name, running_thread ()->name);
   list_init (&t->children);
   // printf("%d check of the list is empty\n", list_empty (&t->children));
+  list_init (&t->files);
+  t->fd = START_FD; 
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and

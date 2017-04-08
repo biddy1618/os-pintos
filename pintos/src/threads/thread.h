@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include "threads/synch.h"
 
+#include "filesys/file.h"
+
 /* States in a thread's life cycle. */
 enum thread_status
   {
@@ -94,10 +96,19 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
 
-    struct list children;               /* List of children processes (threads to
-                                           to be exact). */
+    struct list children;               /* List of children processes (stored as
+                                           child_meta to be exact). */
 
     struct thread *parent;              /* Parent of user program. */
+
+    struct list files;                  /* List of opened file descriptors of
+                                           current thread (stored as file_meta
+                                           to be exact). */
+
+    int fd;                             /* The variable that used to allocate
+                                           file descriptor number for the files
+                                           opened by currrent thread. */
+
       
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
@@ -126,10 +137,23 @@ struct child_meta
                                            children list. */
   };
 
+/* Struct for keeping information about the files opened. Stored
+   as a list element. */
+struct file_meta
+  {
+    int fd;                             /* File descriptor. */
+    struct file *file;                  /* File pointer. */
+    struct list_elem elem;              /* List element that is linked to thread's
+                                           files list. */
+  };
+
 bool is_child (tid_t, struct thread *);
 struct child_meta *get_child (tid_t, struct thread *);
 bool remove_child (tid_t, struct thread *);
 void set_status (int);
+int file_add (struct file *);
+struct file *file_get (int);
+struct file *file_remove (int);
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.
