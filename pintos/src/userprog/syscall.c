@@ -12,11 +12,10 @@
 #include "threads/vaddr.h"
 #include "userprog/pagedir.h"
 
-
 static void syscall_handler (struct intr_frame *);
 
 static int get_arg (void *);
-static void sys_exit (int);
+static void check_arg (void *);
 static int sys_exec (char *);
 static int sys_wait (tid_t);
 static bool sys_create (char *, unsigned);
@@ -28,8 +27,6 @@ static int sys_write (int, char *, unsigned);
 static void sys_seek (int, unsigned);
 static unsigned sys_tell (int);
 static void sys_close (int);
-
-
 
 void
 syscall_init (void) 
@@ -62,6 +59,9 @@ syscall_handler (struct intr_frame *f UNUSED)
 			/* Get first argument. */
 			char *file_name = (char *) get_arg (f->esp + WORD_SIZE);
 
+			/* Check the pointer. */
+			check_arg (file_name);
+
 			/* I was looking in the for the information as to where save
 			   return value from the sys_call. Couldn't find any except
 			   in internet. Seems like f->eax is place where we should
@@ -92,17 +92,28 @@ syscall_handler (struct intr_frame *f UNUSED)
 		{
 			/* Get arguments. */
 			char *file = (char *) get_arg (f->esp + WORD_SIZE);
-			unsigned init_size = (unsigned) get_arg (f->esp + WORD_SIZE);
+			unsigned init_size = (unsigned) get_arg (f->esp + 
+												2 * WORD_SIZE);
 
+			/* Check the pointer. */
+			check_arg (file);			
+
+			lock_acquire (&filesys_lock);
 			f->eax = sys_create (file, init_size);
+			lock_release (&filesys_lock);
 			break;
 		}
 		case SYS_REMOVE:
 		{
 			/* Get first argument. */
 			char *file = (char *) get_arg (f->esp + WORD_SIZE);
-			
+
+			/* Check the pointer. */
+			check_arg (file);			
+
+			lock_acquire (&filesys_lock);
 			f->eax = sys_remove (file);
+			lock_release (&filesys_lock);
 			
 			break;
 		}
@@ -110,16 +121,23 @@ syscall_handler (struct intr_frame *f UNUSED)
 		{
 			/* Get first argument. */
 			char *file = (char *) get_arg (f->esp + WORD_SIZE);
-			
+
+			/* Check the pointer. */
+			check_arg (file);			
+
+			lock_acquire (&filesys_lock);
 			f->eax = sys_open (file);
+			lock_release (&filesys_lock);
 			break;	
 		}
 		case SYS_FILESIZE:
 		{
 			/* Get first argument. */
 			int fd = get_arg (f->esp + WORD_SIZE);
-
+			
+			lock_acquire (&filesys_lock);
 			f->eax = sys_filesize (fd);
+			lock_release (&filesys_lock);
 			break;
 		}
 		case SYS_READ:
@@ -129,7 +147,12 @@ syscall_handler (struct intr_frame *f UNUSED)
 			char *buf = (char *) get_arg (f->esp + 2 * WORD_SIZE);
 			unsigned size = (unsigned) get_arg (f->esp + 3 * WORD_SIZE);
 
+			/* Check the pointer. */
+			check_arg (buf);			
+
+			lock_acquire (&filesys_lock);
 			f->eax = sys_read (fd, buf, size);
+			lock_release (&filesys_lock);
 			break;
 		}
 		case SYS_WRITE:
@@ -139,7 +162,12 @@ syscall_handler (struct intr_frame *f UNUSED)
 			char *buf =  (char *) get_arg (f->esp + 2 * WORD_SIZE);
 			unsigned size = (unsigned) get_arg (f->esp + 3 * WORD_SIZE);
 
+			/* Check the pointer. */
+			check_arg (buf);			
+
+			lock_acquire (&filesys_lock);
 			f->eax = sys_write (fd, buf, size);
+			lock_release (&filesys_lock);
 			break;
 		}
 		case SYS_SEEK:
@@ -147,24 +175,30 @@ syscall_handler (struct intr_frame *f UNUSED)
 			/* Get arguments. */
 			int fd = get_arg (f->esp + WORD_SIZE);
 			unsigned pos = (unsigned) get_arg (f->esp + 2 * WORD_SIZE);
-
+			
+			lock_acquire (&filesys_lock);
 			sys_seek (fd, pos);
+			lock_release (&filesys_lock);
 			break;
 		}
 		case SYS_TELL:
 		{
 			/* Get first argument. */
 			int fd = get_arg (f->esp + WORD_SIZE);
-
+			
+			lock_acquire (&filesys_lock);
 			f->eax = sys_tell (fd);
+			lock_release (&filesys_lock);
 			break;
 		}
 		case SYS_CLOSE:
 		{	
 			/* Get first argument. */
 			int fd = get_arg (f->esp + WORD_SIZE);
-
+			
+			lock_acquire (&filesys_lock);
 			sys_close (fd);
+			lock_release (&filesys_lock);
 			break;
 		}
 		// case SYS_MMAP:
@@ -199,17 +233,24 @@ syscall_handler (struct intr_frame *f UNUSED)
 
 }
 
+/* Check if given address belongs to user virtual address and is from
+   current thread's page directory. If not, then exit with error. */
+void
+check_arg (void *p)
+{
+	if (!is_user_vaddr (p) || 
+		!pagedir_get_page (thread_current ()->pagedir, p))
+	{
+		sys_exit (ERROR);
+	}
+}
+
 /* Get the value from stack that is placed as size of integer. Check if 
    the pointer obtained belongs to user virtual address. */
 int
 get_arg (void *esp)
 {	
-	if (!is_user_vaddr (esp) || 
-		!pagedir_get_page (thread_current ()->pagedir, esp))
-	{
-		sys_exit (EXIT_FAILURE);
-	}
-
+	check_arg (esp);
 	return *((int *) esp);
 }
 
@@ -221,6 +262,10 @@ sys_exit (int status)
 	/* Print exit message. */
 	printf ("%s: exit(%d)\n", thread_name (), status);
 	set_status (status);
+	if (lock_held_by_current_thread (&filesys_lock))
+	{
+		lock_release (&filesys_lock);
+	}
 	thread_exit ();
 }
 
@@ -237,8 +282,6 @@ sys_exec (char *file_name)
 int
 sys_wait (tid_t tid)
 {	
-	/* NOTE: Read 3.3.4 about this system call. */
-
 	/* Wait for the given tid to terminate. */
 	return process_wait (tid);
 }
@@ -249,8 +292,7 @@ sys_wait (tid_t tid)
 bool
 sys_create (char *file, unsigned init_size) 
 {
-	/* TODO: Come up with the file allocation design for the whole
-	   project 2. */
+	/* Create file. */
 	return filesys_create (file, init_size);
 }
 
@@ -264,9 +306,11 @@ sys_remove (char *file)
 	/* NOTE: Currently, I didn't figure out whether following function
 	   somehow affects the file accessibility, if opened by any other
 	   threads, so TODO: figure it out in future. */
+	
+	/* Remove file. */
 	return filesys_remove (file);
 }
-   
+
 /* Function that is called when SYS_OPEN invoked. Returns a file
    descriptor (nonnegative integer), or -1 if file couldn't be opened.
    Shouldn't return 0, or 1, which are reserved for console. */
@@ -280,7 +324,8 @@ sys_open (char *file)
 	/* Get the file. */
 	struct file *f = filesys_open (file);
 
-	/* TODO: Check the validity of file. */
+	if (f == NULL)
+		return ERROR;
 
 	/* Add the file as opened file to thread, and return fd. */
 	int fd = add_file (f);
@@ -297,9 +342,10 @@ sys_filesize (int fd)
 	/* Get the opened file by current thread. */
 	struct file *f = get_file (fd);
 
-	/* If current thread doesn't own the file, then return 0. */
-	if (f == NULL) return -1;
-
+	/* If current thread doesn't own the file, terminate. */
+	if (f == NULL)
+		sys_exit (ERROR);
+	
 	/* Get the size. */
 	int fs = file_length (f);
 	return fs;
@@ -328,16 +374,15 @@ sys_read (int fd, char *buf, unsigned size)
 
 	/* If the read from stdout, then return error. */
 	if (fd == STDOUT_FILENO)
-	{
-		return -1;
-	}
+		sys_exit (ERROR);
 
 	/* Otherwise it is file descriptor. Get the opened file by 
 	   current thread. */
 	struct file *f = get_file (fd);
 
 	/* If current thread doesn't own the file, then return 0. */
-	if (f == NULL) return -1;
+	if (f == NULL) 
+		sys_exit (ERROR);
 
 	/* Read the file, and return the number of bytes actually read.
 	   Might be less than size, if EOF reached. */
@@ -354,7 +399,7 @@ sys_write (int fd, char *buf, unsigned size)
 	/* If the write to stdin, then return error. */
 	if (fd == STDIN_FILENO)
 	{
-		return -1;
+		sys_exit (ERROR);
 	}
 
 	/* If output is for console. */ 
@@ -371,9 +416,12 @@ sys_write (int fd, char *buf, unsigned size)
 	struct file *f = get_file (fd);
 
 	/* If current thread doesn't own the file, then return error. */
-	if (f == NULL) return -1;
+	if (f == NULL) 
+		sys_exit (ERROR);
 
-	return file_write (f, buf, size);
+	int k = file_write (f, buf, size);
+
+	return k;
 }
 
 /* Function that is called when SYS_SEEK invoked. Changes the next
@@ -385,7 +433,7 @@ sys_seek (int fd, unsigned pos)
 	/* If the file is stdout or stdin, then return error. */
 	if (fd == STDIN_FILENO || STDOUT_FILENO)
 	{
-		return;
+		sys_exit (ERROR);
 	}
 
 	/* Otherwise it is file descriptor. Get the opened file by 
@@ -393,7 +441,8 @@ sys_seek (int fd, unsigned pos)
 	struct file *f = get_file (fd);
 
 	/* If current thread doesn't own the file, then return error. */
-	if (f == NULL) return;
+	if (f == NULL) 
+		sys_exit (ERROR);
 
 	file_seek (f, pos);
 }
@@ -406,16 +455,15 @@ sys_tell (int fd)
 {
 	/* If the file is stdout or stdin, then return error. */
 	if (fd == STDIN_FILENO || STDOUT_FILENO)
-	{
-		return -1;
-	}
+		sys_exit (ERROR);
 
 	/* Otherwise it is file descriptor. Get the opened file by 
 	   current thread. */
 	struct file *f = get_file (fd);
 
 	/* If current thread doesn't own the file, then return error. */
-	if (f == NULL) return -1;
+	if (f == NULL) 
+		sys_exit (ERROR);
 
 	return file_tell (f);
 }
@@ -426,17 +474,12 @@ void
 sys_close (int fd) 
 {
 	/* If the file is stdout or stdin, then return error. */
-	if (fd == STDIN_FILENO || STDOUT_FILENO)
-	{
-		return;
-	}
+	if (fd == STDIN_FILENO || fd == STDOUT_FILENO)
+		sys_exit (ERROR);
 
 	/* Otherwise it is file descriptor. Remove the file meta
-	   struct. */
+	   struct. It might be removed before, but that's just fine. */
 	struct file *f = remove_file (fd);
-	
-	/* If failed, then return error. */
-	if (f == NULL) return;
 
 	/* If successfull, then close file. */
 	file_close (f);

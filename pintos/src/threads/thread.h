@@ -105,6 +105,7 @@ struct thread
                                            current thread (stored as file_meta
                                            to be exact). */
 
+
     int fd;                             /* The variable that used to allocate
                                            file descriptor number for the files
                                            opened by currrent thread. */
@@ -113,6 +114,7 @@ struct thread
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
+    struct file *execfile;              /* Pointer to its executable file. */
 #endif
 
     /* Owned by thread.c. */
@@ -147,6 +149,8 @@ struct file_meta
                                            files list. */
   };
 
+struct lock filesys_lock;
+
 bool is_child (tid_t, struct thread *);
 struct child_meta *get_child (tid_t, struct thread *);
 bool remove_child (tid_t, struct thread *);
@@ -156,6 +160,8 @@ int add_file (struct file *);
 struct file *get_file (int);
 struct file *remove_file (int);
 void clear_files (void);
+
+#define FD_ERROR -1
 
 /* If false (default), use round-robin scheduler.
    If true, use multi-level feedback queue scheduler.

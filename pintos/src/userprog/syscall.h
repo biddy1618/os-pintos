@@ -3,7 +3,7 @@
 
 void syscall_init (void);
 
-#define EXIT_SUCCESS 0          /* Successful execution. */
-#define EXIT_FAILURE -1          /* Unsuccessful execution. */
+#define ERROR -1          /* Unsuccessful execution. */
+void sys_exit (int);
 
 #endif /* userprog/syscall.h */

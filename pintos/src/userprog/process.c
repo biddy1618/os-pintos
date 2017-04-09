@@ -64,6 +64,7 @@ parse_args (char *args)
 struct args_sema {
   char **parsed_cmdline;
   struct semaphore block;
+  bool success;
 };
 
 /* Starts a new thread running a user program loaded from
@@ -93,16 +94,20 @@ process_execute (const char *file_name)
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (args->parsed_cmdline[1], PRI_DEFAULT, 
                       start_process, args);
-  // printf("%d tid of created thread named %s\n", tid, args->parsed_cmdline[1]);
+  
+  /* Wait to check for any error in load, and also to be able to free
+     the allocated resources. */
+  sema_down (&args->block);
+  
+  /* If load failed. */
+  if (!args->success)
+    tid = TID_ERROR;
 
-  // printf("%d check of the list is empty after creation, thread name = %s\n", list_empty (&get_child (tid, thread_current ())->child->children), thread_name ());
+  /* Deallocate allocated resourses. */
+  free (args->parsed_cmdline);
+  free (args);
+  palloc_free_page (fn_copy); 
   
-  
-  if (tid == TID_ERROR) {
-    sema_down (&args->block);
-    free(args);
-    palloc_free_page (fn_copy); 
-  }
   return tid;
 }
 
@@ -114,9 +119,7 @@ start_process (void *cmdline_)
   struct args_sema *cmdline = cmdline_;
   struct intr_frame if_;
   bool success;
-  // printf("%d check of the list is empty in start_process 1\n", list_empty (&thread_current ()->children));
   
-
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
@@ -124,18 +127,16 @@ start_process (void *cmdline_)
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load ((const char**) cmdline->parsed_cmdline,
                    &if_.eip, &if_.esp);
-  // printf("%d check of the list is empty in start_process 2\n", list_empty (&thread_current ()->children));
-  
 
+  cmdline->success = success;
+  
   /* Release the block on the parent process to free the allocated
      memory for copy of command line. */
   sema_up (&cmdline->block);
   
   /* If load failed, quit. */
   if (!success) 
-    thread_exit ();
-  // printf("%d check of the list is empty in start_process 3\n", list_empty (&thread_current ()->children));
-  
+    thread_exit ();  
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
@@ -160,15 +161,16 @@ int
 process_wait (tid_t child_tid UNUSED) 
 {
   struct thread *t = thread_current ();
-  /* If was terminated by the kernel, then -1. */
-  if (child_tid == -1) return -1;
+  /* If was terminated by the kernel, then TID_ERROR. */
+  if (child_tid == TID_ERROR) 
+    return TID_ERROR;
   
-  /* Check of child_tid is actually is child, otherwise -1. */
-  if (!is_child (child_tid, t)) return -1; 
+  /* Check of child_tid is actually is child, otherwise TID_ERROR. */
+  if (!is_child (child_tid, t)) 
+    return TID_ERROR; 
 
   struct child_meta *cm = get_child (child_tid, t);
-  // printf("%d check of the list is empty in process wait\n", list_empty (&cm->child->children));
-
+  
   ASSERT (cm != NULL);
   /* If thread with this child_tid has been called with process
      wait, then -1. */
@@ -176,7 +178,7 @@ process_wait (tid_t child_tid UNUSED)
   if (cm->wait)
   {
     intr_set_level (old_level);
-    return -1;
+    return TID_ERROR;
   } 
   
   cm->wait = true;
@@ -185,12 +187,7 @@ process_wait (tid_t child_tid UNUSED)
   /* Wait for child to terminate. */
   sema_down (&cm->finished);  
 
-  /* If the child process was terminated with kernel, then -1. 
-     NOTE: I don't know yet how to check if the child process
-     was terminated with kernel, thus miss this point for now. */
-
   /* Otherwise return its exit status. */
-  // printf("%d check of the list is empty in process wait DAUREN\n", list_empty (&cm->child->children));
   int status = cm->status;
   remove_child (child_tid, t);
   return status;
@@ -212,15 +209,21 @@ process_exit (void)
 
   /* Free the semaphore, in case parent waits for it. */
   struct child_meta *cm = get_child (cur->tid, cur->parent);
+
+  /* Allow write to file. */
+  lock_acquire (&filesys_lock);
+  if (thread_current ()->execfile != NULL)
+    file_allow_write (thread_current ()->execfile);
+  lock_release (&filesys_lock);
+  
+
   /* If child meta still exists, free its lock. NOTE: Some 
      SPAGHETTI code. */
-  if (sema_try_down (&cm->finished)) 
-  {
-    sema_up (&cm->finished);
-  }
-  else
-  {
-    sema_up (&cm->finished);
+  if (cm != NULL) {
+    if (sema_try_down (&cm->finished)) 
+      sema_up (&cm->finished);
+    else
+      sema_up (&cm->finished);
   }
 
 
@@ -365,6 +368,12 @@ load (const char **parsed_cmdline, void (**eip) (void), void **esp)
     goto done; 
   }
 
+  /* Deny write to exectutable file. */
+  lock_acquire (&filesys_lock);
+  // thread_current ()->execfile = file;
+  file_deny_write (file);
+  lock_release (&filesys_lock);
+
   /* Read and verify executable header. */
   if (file_read (file, &ehdr, sizeof ehdr) != sizeof ehdr
     || memcmp (ehdr.e_ident, "\177ELF\1\1\1", 7)
@@ -447,8 +456,10 @@ load (const char **parsed_cmdline, void (**eip) (void), void **esp)
   success = true;
 
   done:
+  
   /* We arrive here whether the load is successful or not. */
   file_close (file);
+
   return success;
 }
 
@@ -581,68 +592,48 @@ setup_stack (void **esp, const char **parsed_fn)
          hack). */
       int temp = (int) parsed_fn[0];
 
-      // printf("%p initialized\n", *esp);
-
       /* For each argument, decrement the esp for length of a argument added
          null terminator, and then copy the argument with null included into
          esp. Store the address of esp into the argument address instead. */ 
       for (; temp > 0; temp--) {
         *esp -= (strlen (parsed_fn[temp]) + 1);
         memcpy(*esp, parsed_fn[temp], strlen (parsed_fn[temp]) + 1);
-        // printf("%p pushed %dth argument as %s (in the stack -> %s)\n", 
-        //               *esp, temp, parsed_fn[temp], *esp);
         parsed_fn[temp] = (char *) *esp;
-        // printf("%d updated array -> %s\n", temp, parsed_fn[temp]);
       }
 
       /* Make sure we keep the alignment. */
       *esp -= ((unsigned) *esp) % WORD_SIZE;
-      // printf("%p alignment\n", *esp);
-
+      
       /* Null pointer sentinel. */
       *esp -= WORD_SIZE;
-      // printf("%p pushed null pointer sentinel -> %p\n", *esp, *((char *) *esp));
       
       /* For each address of arguments passed, decrement the esp for a length
          of char address and copy the address of argemnts into the esp. */
       for (temp = (int) parsed_fn[0]; temp > 0; temp--) {
         *esp -= sizeof (char *);
         memcpy (*esp,  &parsed_fn[temp], sizeof (char *));
-        // printf("%p pushed the address of %dth argument, argument -> %s (in the stack -> %p)\n", 
-        //                 *esp, temp, parsed_fn[temp], *((char *) *esp));
       }
 
-      /* BUG: Don't know what to do, in case of empty arguments. Current version simply
-         puts the null pointer sentinel, argc, and return address. */
       /* If there are arguments. */
-      // if ((int) parsed_fn[0] > 1) {
-        /* Push the current address (the beggining of the addresses of argument)
-           into the stack. */
-        temp = (int) *esp;
-        *esp -= sizeof (char *);
-        memcpy (*esp, &temp, sizeof (char *));
-        // printf("%p pushed the address of old esp -> %p (in the stack -> %p)\n",
-        //                   *esp, temp, *((char *) *esp));
-      // }
-
+      temp = (int) *esp;
+      *esp -= sizeof (char *);
+      memcpy (*esp, &temp, sizeof (char *));
+      
       /* Push the number of arguments into the stack. Since our array holds the
          total number of args including the filename, we should subtract on from
          the number of args. */      
       *esp -= sizeof (int);
       temp = (int) parsed_fn[0];
       memcpy (*esp, &(temp), sizeof (int));
-      // printf("%p pushed the argc -> %d (in the stack -> %d)\n",
-      //                   *esp, parsed_fn[0], *((int *) *esp));
       
       /* Push fake return address into the stack. */
       temp = 0;
       *esp -= sizeof (void *);
       memcpy (*esp, &temp, sizeof (void *));
-      // printf("%p pushed the fake return address -> %p (in the stack -> %p)\n",
-      //                     *esp, temp, *((char *) *esp));
+      
+      /* hex_dump ((uintptr_t) *esp, *esp, (unsigned) PHYS_BASE - (unsigned) *esp, true);
 
-      // hex_dump ((uintptr_t) *esp, *esp, (unsigned) PHYS_BASE - (unsigned) *esp, true);
-      /* Outputs just exactly like in example - 3.5.1 if following command is run:
+        Outputs just exactly like in example - 3.5.1 if following command is run:
          pintos -v -k -T 60 --qemu  --filesys-size=2 -p tests/userprog/args-multiple -a args-multiple -- -q  -f run 'args-multiple /bin/ls -l foo bar'.
 
       bfffffc0                                      00 00 00 00 |            ....|
@@ -650,12 +641,6 @@ setup_stack (void **esp, const char **parsed_fn)
       bfffffe0  f8 ff ff bf fc ff ff bf-00 00 00 00 00 2f 62 69 |............./bi|
       bffffff0  6e 2f 6c 73 00 2d 6c 00-66 6f 6f 00 62 61 72 00 |n/ls.-l.foo.bar.|
       */
-    
-
-      /* Free the allocated array of pointers that used to keep the arguments
-         addresses. */
-      free(parsed_fn);
-      // printf("Finished successfully\n");
     }
     else {
       palloc_free_page (kpage);

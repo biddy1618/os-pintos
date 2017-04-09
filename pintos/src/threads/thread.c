@@ -14,6 +14,7 @@
 #include "threads/malloc.h"
 #ifdef USERPROG
 #include "userprog/process.h"
+#include "filesys/file.h"
 #endif
 
 /* Random value for struct thread's `magic' member.
@@ -111,7 +112,12 @@ is_child (tid_t tid, struct thread *t)
      to use the pointer. From the web - "The assignment will only do it 
      for immediate members of a structures and will fail to copy when you 
      have Complex datatypes in a structure. Here COMPLEX means that you
-      cant have array of pointers ,pointing to lists.". */ 
+      cant have array of pointers ,pointing to lists.". */
+
+  /* Parent thread terminated, then return null. */
+  if (t == NULL)
+    return false;
+ 
 
   struct list *children = &t->children; 
   struct list_elem *e;
@@ -122,7 +128,8 @@ is_child (tid_t tid, struct thread *t)
   {
     struct child_meta *cm = list_entry (e, struct child_meta, elem);
     /* If found, return true. */
-    if (cm->tid == tid) return true;
+    if (cm->tid == tid) 
+      return true;
   }
   /* Otherwise false. */
   return false;
@@ -134,6 +141,10 @@ is_child (tid_t tid, struct thread *t)
 struct child_meta *
 get_child (tid_t tid, struct thread *t)
 {
+  /* Parent thread terminated, then return null. */
+  if (!is_child (tid, t))
+    return NULL;
+
   struct list *children = &t->children;
   struct list_elem *e;
 
@@ -143,7 +154,8 @@ get_child (tid_t tid, struct thread *t)
   {
     struct child_meta *cm = list_entry (e, struct child_meta, elem);
     /* If found, return child meta information. */
-    if (cm->tid == tid) return cm;
+    if (cm->tid == tid) 
+      return cm;
   }
   /* Otherwise return NULL. */
   return NULL;
@@ -156,8 +168,12 @@ get_child (tid_t tid, struct thread *t)
 bool 
 remove_child (tid_t tid, struct thread *t)
 {
+  enum intr_level old_level;
+  
+  old_level = intr_disable ();
   /* Check if child. */
-  if (is_child (tid, t) == false) return false;
+  if (!is_child (tid, t)) 
+    return false;
 
   /* Get child. */
   struct child_meta *cm = get_child (tid, t);
@@ -172,10 +188,12 @@ remove_child (tid_t tid, struct thread *t)
     list_remove (&cm->elem);
     /* Free the allocated resoures for the child. */
     free (cm);
+    intr_set_level (old_level);
     return true;
   }
 
   /* Otherwise, return false. */
+  intr_set_level (old_level);
   return false;
 }
 
@@ -186,26 +204,36 @@ remove_child (tid_t tid, struct thread *t)
 void 
 set_status (int status)
 {
+  enum intr_level old_level;
+  
+  old_level = intr_disable ();
   struct thread *t = thread_current ();
   
   /* TODO: Check if parent exists. */
 
   struct child_meta *cm = get_child (t->tid, t->parent);
   /* If no such child, then return. */
-  if (cm == NULL) return;
-
+  if (cm == NULL)
+  { 
+    intr_set_level (old_level); 
+    return;
+  }
   /* Set the status. */
   cm->status = status;
 
   /* Sema up the semaphore that is used to indicate whether this
      thread has been finished, or not. Used by parent process. */
   sema_up (&cm->finished);
+  intr_set_level (old_level);
 }
 
 /* Deallocate all the children meta information. */
 void
 clear_children (void) 
 {
+  enum intr_level old_level;
+  
+  old_level = intr_disable ();
   struct list *children = &thread_current ()->children;
   struct list_elem *e;
 
@@ -220,12 +248,16 @@ clear_children (void)
     list_remove (&cm->elem);
     free (cm);
   }
+  intr_set_level (old_level);
 }
 
 /* Add file as opened to current thread. */
 int
 add_file (struct file *f)
 {
+  enum intr_level old_level;
+  
+  old_level = intr_disable ();
   /* Allocate file meta for current file. */
   struct file_meta *fm = malloc (sizeof (struct file_meta));
 
@@ -235,6 +267,7 @@ add_file (struct file *f)
   fm->file = f;
   list_push_back (&thread_current ()->files, &fm->elem);
 
+  intr_set_level (old_level);
   return fm->fd;
 }
 
@@ -243,6 +276,9 @@ add_file (struct file *f)
 struct file *
 get_file (int fd)
 {
+  enum intr_level old_level;
+  
+  old_level = intr_disable ();
   struct list *files = &thread_current ()->files;
   struct list_elem *e;
 
@@ -252,9 +288,14 @@ get_file (int fd)
   {
     struct file_meta *fm = list_entry (e, struct file_meta, elem);
     /* If found, return child meta information. */
-    if (fm->fd == fd) return fm->file;
+    if (fm->fd == fd) 
+    {
+      intr_set_level (old_level);
+      return fm->file;
+    }
   }
   /* Otherwise return NULL. */
+  intr_set_level (old_level);
   return NULL;
 }
 
@@ -263,6 +304,9 @@ get_file (int fd)
 struct file *
 remove_file (int fd)
 {
+  enum intr_level old_level;
+  
+  old_level = intr_disable ();
   struct list *files = &thread_current ()->files;
   struct list_elem *e;
 
@@ -279,10 +323,12 @@ remove_file (int fd)
       free (fm);
 
       /* Return file pointer. */
+      intr_set_level (old_level);
       return f;
     }
   }
   /* Otherwise return NULL. */
+  intr_set_level (old_level);
   return NULL;
 }
 
@@ -290,6 +336,9 @@ remove_file (int fd)
 void
 clear_files (void) 
 {
+  enum intr_level old_level;
+  
+  old_level = intr_disable ();
   struct list *files = &thread_current ()->files;
   struct list_elem *e;
 
@@ -310,6 +359,7 @@ clear_files (void)
     /* Remove from the list and deallocate file meta. */
     list_remove (&fm->elem);
     free (fm);
+    intr_set_level (old_level);
   }
 }
 
@@ -334,6 +384,7 @@ thread_init (void)
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
+  lock_init (&filesys_lock);
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
@@ -430,8 +481,6 @@ thread_create (const char *name, int priority,
   tid = t->tid = allocate_tid ();
   /* Add child. */
   add_child (t);
-  // printf("%d check of the list is empty in thread create\n", list_empty (&t->children));
-
 
   /* Prepare thread for first run by initializing its stack.
      Do this atomically so intermediate values for the 'stack' 
@@ -721,9 +770,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->magic = THREAD_MAGIC;
   list_push_back (&all_list, &t->allelem);
-  // printf("Initiated the children of thread %s, which is child of %s\n", t->name, running_thread ()->name);
   list_init (&t->children);
-  // printf("%d check of the list is empty\n", list_empty (&t->children));
   list_init (&t->files);
   t->fd = START_FD; 
 }
