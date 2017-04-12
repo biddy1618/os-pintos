@@ -105,12 +105,9 @@ struct thread
                                            current thread (stored as file_meta
                                            to be exact). */
 
+    int fd;                             /* Values from which file descriptors
+                                           are obtained. */
 
-    int fd;                             /* The variable that used to allocate
-                                           file descriptor number for the files
-                                           opened by currrent thread. */
-
-      
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
@@ -125,7 +122,7 @@ struct thread
    as a list element */
 struct child_meta
   {
-    tid_t tid;                          /* ID of the thread (or process, howerver 
+    tid_t tid;                          /* ID of the thread (or process, however 
                                            you call, in PintOS they are same). */
     int status;                         /* Status in case of set by child thread
                                            in case of termination. */
@@ -139,8 +136,8 @@ struct child_meta
                                            children list. */
   };
 
-/* Struct for keeping information about the files opened. Stored
-   as a list element. */
+/* Struct for keeping information about the files opened by particular
+   process. Stored as a list element. */
 struct file_meta
   {
     int fd;                             /* File descriptor. */
@@ -149,15 +146,16 @@ struct file_meta
                                            files list. */
   };
 
+/* Lock to make sure that only one process is accessing the filesystem. */
 struct lock filesys_lock;
+
 
 bool is_child (tid_t, struct thread *);
 struct child_meta *get_child (tid_t, struct thread *);
-bool remove_child (tid_t, struct thread *);
 void set_status (int);
 void clear_children (void);
 int add_file (struct file *);
-struct file *get_file (int);
+struct file_meta *get_file (int);
 struct file *remove_file (int);
 void clear_files (void);
 

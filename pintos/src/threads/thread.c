@@ -161,42 +161,6 @@ get_child (tid_t tid, struct thread *t)
   return NULL;
 }
 
-/* Remove child meta from children list of thread t, and 
-   deallocate allocated memory for the child meta struct. If
-   given tid thread is not child, or its lock is still acquaired,
-   then return false. */ 
-bool 
-remove_child (tid_t tid, struct thread *t)
-{
-  enum intr_level old_level;
-  
-  old_level = intr_disable ();
-  /* Check if child. */
-  if (!is_child (tid, t)) 
-    return false;
-
-  /* Get child. */
-  struct child_meta *cm = get_child (tid, t);
-  ASSERT (cm != NULL);
-
-
-  /* Check if child is terminated, and, if so, remove it from
-     the children list and return true. */
-  if (sema_try_down (&cm->finished)) 
-  {
-    sema_up (&cm->finished);
-    list_remove (&cm->elem);
-    /* Free the allocated resoures for the child. */
-    free (cm);
-    intr_set_level (old_level);
-    return true;
-  }
-
-  /* Otherwise, return false. */
-  intr_set_level (old_level);
-  return false;
-}
-
 /* Set the status for meta data of current thread for the parent,
    and also up the semaphore for any process that is waiting on
    this thread. This function should be called when thread
@@ -243,10 +207,24 @@ clear_children (void)
   {
     struct child_meta *cm = list_entry (e, struct child_meta, elem);
 
+    /* Check if child still exists and set the child's parent field
+       to NULL and remove from the list and deallocate child meta. */
+    if (cm->child != NULL)
+      cm->child->parent = NULL;
+    list_remove (e);
+    /* NOTE: I have been struggling to find this bug for 3 hours
+       once again, shit. The loop defined above works directly
+       with struct e, that is being freed below, thus list_elem
+       modified and loop breaks (stops working as supposed to).
+      
+       free (cm);
 
-    /* Remove from the list and deallocate child meta. */
-    list_remove (&cm->elem);
+       Need to change this behaviour. BUG: Be carefull here.
+       Still not sure if this implementation works well. */
+    
+    struct list_elem temp = *e;
     free (cm);
+    e = &temp;
   }
   intr_set_level (old_level);
 }
@@ -273,7 +251,7 @@ add_file (struct file *f)
 
 /* Get the file meta information with given fd. Returns 
    NULL if no such fd acquired exists. */
-struct file *
+struct file_meta *
 get_file (int fd)
 {
   enum intr_level old_level;
@@ -281,22 +259,20 @@ get_file (int fd)
   old_level = intr_disable ();
   struct list *files = &thread_current ()->files;
   struct list_elem *e;
+  struct file_meta *fm = NULL;
 
   /* For each file, check if it has tid same as given tid. */
   for (e = list_begin (files); e != list_end (files);
    e = list_next (e))
   {
-    struct file_meta *fm = list_entry (e, struct file_meta, elem);
+    fm = list_entry (e, struct file_meta, elem);
     /* If found, return child meta information. */
     if (fm->fd == fd) 
-    {
-      intr_set_level (old_level);
-      return fm->file;
-    }
+      break;
   }
   /* Otherwise return NULL. */
   intr_set_level (old_level);
-  return NULL;
+  return fm;
 }
 
 /* Remove the file meta information with given fd. Returns
@@ -307,29 +283,21 @@ remove_file (int fd)
   enum intr_level old_level;
   
   old_level = intr_disable ();
-  struct list *files = &thread_current ()->files;
-  struct list_elem *e;
+  struct file *f = NULL;
+  
+  /* Get the file meta and, if exists, remove it from the list. */
+  struct file_meta *fm = get_file (fd);
 
-  /* For each file, check if it has tid same as given tid. */
-  for (e = list_begin (files); e != list_end (files);
-   e = list_next (e))
+  if (fm != NULL)
   {
-    struct file_meta *fm = list_entry (e, struct file_meta, elem);
-    /* If found, remove it from list, and free allocated resourses. */
-    if (fm->fd == fd)
-    {
-      struct file *f = fm->file;
-      list_remove (&fm->elem);
-      free (fm);
-
-      /* Return file pointer. */
-      intr_set_level (old_level);
-      return f;
-    }
+    f = fm->file;
+    list_remove (&fm->elem);
+    free (fm);
   }
+      
   /* Otherwise return NULL. */
   intr_set_level (old_level);
-  return NULL;
+  return f;
 }
 
 /* Deallocate all the file meta information, and close if open. */
@@ -350,17 +318,15 @@ clear_files (void)
 
     /* Close file, if opened. BUG: compiler says file_close if 
        not found. */
-    
-    // if (fm->file != NULL)
-    // {
-    //   file_close (fm->file);
-    // }
+    // file_close (fm->file);
 
     /* Remove from the list and deallocate file meta. */
     list_remove (&fm->elem);
+    struct list_elem temp = *e;
     free (fm);
-    intr_set_level (old_level);
+    e = &temp;
   }
+  intr_set_level (old_level);
 }
 
 /* Initializes the threading system by transforming the code
@@ -479,6 +445,7 @@ thread_create (const char *name, int priority,
      thus assigning the tid happens after initialization. */
   init_thread (t, name, priority);
   tid = t->tid = allocate_tid ();
+  
   /* Add child. */
   add_child (t);
 

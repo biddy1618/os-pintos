@@ -150,6 +150,10 @@ page_fault (struct intr_frame *f)
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
 
+  /* If the exception was caused by the user, then terminate
+     current process with ERROR. NOTE: for future, there could
+     be some modifications to this code part, since this will
+     exit the process whenever there is a page fault. */
   if (user)
     sys_exit (ERROR);
 

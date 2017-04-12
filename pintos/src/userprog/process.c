@@ -26,6 +26,16 @@ static bool load (const char **parsed_cmdline,
 
 static char **parse_args (char *args);
 
+/* Structure to hold avoid racing. Used when parent creates a child
+   with allocated args copy, and waits until the child processes the
+   args. If child is finished processing the args, then parent
+   deallocates the allocated memory for copy of args. */
+struct args_sema {
+  char **parsed_cmdline;
+  struct semaphore block;
+  bool success;
+};
+
 /* Parses the given args, creating an array of char pointers to
    parsed args. The delimiter is just simply white space. */ 
 char **
@@ -57,16 +67,6 @@ parse_args (char *args)
   return args_ret;
 }
 
-/* Structure to hold avoid racing. Used when parent creates a child
-   with allocated args copy, and waits until the child processes the
-   args. If child is finished processing the args, then parent
-   deallocates the allocated memory for copy of args. */
-struct args_sema {
-  char **parsed_cmdline;
-  struct semaphore block;
-  bool success;
-};
-
 /* Starts a new thread running a user program loaded from
    FILENAME.  The new thread may be scheduled (and may even exit)
    before process_execute() returns.  Returns the new process's
@@ -94,7 +94,7 @@ process_execute (const char *file_name)
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (args->parsed_cmdline[1], PRI_DEFAULT, 
                       start_process, args);
-  
+
   /* Wait to check for any error in load, and also to be able to free
      the allocated resources. */
   sema_down (&args->block);
@@ -164,7 +164,7 @@ process_wait (tid_t child_tid UNUSED)
   /* If was terminated by the kernel, then TID_ERROR. */
   if (child_tid == TID_ERROR) 
     return TID_ERROR;
-  
+
   /* Check of child_tid is actually is child, otherwise TID_ERROR. */
   if (!is_child (child_tid, t)) 
     return TID_ERROR; 
@@ -183,14 +183,12 @@ process_wait (tid_t child_tid UNUSED)
   
   cm->wait = true;
   intr_set_level (old_level);
-
+  
   /* Wait for child to terminate. */
   sema_down (&cm->finished);  
 
   /* Otherwise return its exit status. */
-  int status = cm->status;
-  remove_child (child_tid, t);
-  return status;
+  return cm->status;
 }
 
 /* Free the current process's resources. Basically, this function
@@ -203,35 +201,46 @@ process_exit (void)
   struct thread *cur = thread_current ();
   uint32_t *pd;
 
-  /* TODO: Clear its child processes meta information - child_meta,
-     or, if they are still running make it so that they are 
-     inherited by initial thread. */
+  
+  /* If parent still exists and, in case parent waits for it 
+     free the semaphore. NOTE: Parent sets the parent pointer
+     to NULL when terminates. */
+  if (cur->parent != NULL) 
+  {
+    struct child_meta *cm = get_child (cur->tid, cur->parent);
+    
+    /* If child meta still exists, free its lock. NOTE: Some 
+       SPAGHETTI code, actually cm should never be null if 
+       parent exists. */
+    if (cm != NULL) {
+      if (sema_try_down (&cm->finished)) 
+        sema_up (&cm->finished);
+      else
+        sema_up (&cm->finished);
 
-  /* Free the semaphore, in case parent waits for it. */
-  struct child_meta *cm = get_child (cur->tid, cur->parent);
+      /* Set the child pointer of thread child meta information
+         for parent thread to indicate that child thread has
+         terminated. */
+      cm->child = NULL;
+    }
+
+    /* NOTE: No need to delete meta information of current
+       thread in parent process, since parent process might
+       need it, when it calls process wait for tid later. */
+  }
 
   /* Allow write to file. */
   lock_acquire (&filesys_lock);
   if (thread_current ()->execfile != NULL)
     file_allow_write (thread_current ()->execfile);
+  file_close (thread_current ()->execfile);
   lock_release (&filesys_lock);
   
-
-  /* If child meta still exists, free its lock. NOTE: Some 
-     SPAGHETTI code. */
-  if (cm != NULL) {
-    if (sema_try_down (&cm->finished)) 
-      sema_up (&cm->finished);
-    else
-      sema_up (&cm->finished);
-  }
-
-
   /* Deallocate all the child meta information of current thread. */
-  // clear_children ();
+  clear_children ();
 
   /* Deallocate all the files meta information of current thread. */
-  // clear_files ();
+  clear_files ();
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
@@ -368,10 +377,22 @@ load (const char **parsed_cmdline, void (**eip) (void), void **esp)
     goto done; 
   }
 
-  /* Deny write to exectutable file. */
+  /* Deny write to exectutable file. NOTE: Been looking for this BUG
+     for ages. Basically, my file_deny_write didn't work. Been trying
+     to compare the pointers of file to make sure that we are dealing
+     with the same file. Been trying to understand how the inode
+     behind the file structure work. So, there can be many files open
+     at time instance, but all of them share same inode, which is
+     related with writing and modifying the real file. When file
+     created, the same inode with new file structure is given. Inode
+     has counts on how many processes have called deny write and
+     allow write. So, the problem here was that, in end of the
+     current function, file_close (...) was called, which discards
+     file_deny_write (...) function. We had to remove that function
+     and put it when execution finished. */
   lock_acquire (&filesys_lock);
-  // thread_current ()->execfile = file;
-  file_deny_write (file);
+  thread_current ()->execfile = file;
+  file_deny_write (thread_current ()->execfile); 
   lock_release (&filesys_lock);
 
   /* Read and verify executable header. */
@@ -458,7 +479,7 @@ load (const char **parsed_cmdline, void (**eip) (void), void **esp)
   done:
   
   /* We arrive here whether the load is successful or not. */
-  file_close (file);
+  // file_close (file);
 
   return success;
 }

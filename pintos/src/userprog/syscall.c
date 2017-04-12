@@ -28,6 +28,8 @@ static void sys_seek (int, unsigned);
 static unsigned sys_tell (int);
 static void sys_close (int);
 
+
+
 void
 syscall_init (void) 
 {
@@ -261,6 +263,8 @@ sys_exit (int status)
 {
 	/* Print exit message. */
 	printf ("%s: exit(%d)\n", thread_name (), status);
+
+	/* Set the status of current terminating thread. */
 	set_status (status);
 	if (lock_held_by_current_thread (&filesys_lock))
 	{
@@ -324,12 +328,12 @@ sys_open (char *file)
 	/* Get the file. */
 	struct file *f = filesys_open (file);
 
+	/* If openm faile, return error. */
 	if (f == NULL)
 		return ERROR;
 
 	/* Add the file as opened file to thread, and return fd. */
-	int fd = add_file (f);
-	return fd;
+	return add_file (f);
 }  
 
 /* Function that is called when SYS_FILESIZE invoked. Returns size
@@ -340,15 +344,14 @@ int
 sys_filesize (int fd)
 {
 	/* Get the opened file by current thread. */
-	struct file *f = get_file (fd);
+	struct file_meta *fm = get_file (fd);
 
-	/* If current thread doesn't own the file, terminate. */
-	if (f == NULL)
-		sys_exit (ERROR);
+	/* If current thread doesn't own the file, return error. */
+	if (fm == NULL)
+		return ERROR;
 	
 	/* Get the size. */
-	int fs = file_length (f);
-	return fs;
+	return file_length (fm->file);
 }
 
 /* Function that is called when SYS_READ invoked. Returns the number
@@ -378,15 +381,16 @@ sys_read (int fd, char *buf, unsigned size)
 
 	/* Otherwise it is file descriptor. Get the opened file by 
 	   current thread. */
-	struct file *f = get_file (fd);
+	struct file_meta *fm = get_file (fd);
+
 
 	/* If current thread doesn't own the file, then return 0. */
-	if (f == NULL) 
+	if (fm == NULL) 
 		sys_exit (ERROR);
 
 	/* Read the file, and return the number of bytes actually read.
 	   Might be less than size, if EOF reached. */
-	return file_read (f, buf, size);
+	return file_read (fm->file, buf, size);
 }
 
 
@@ -402,6 +406,8 @@ sys_write (int fd, char *buf, unsigned size)
 		sys_exit (ERROR);
 	}
 
+
+
 	/* If output is for console. */ 
 	if (fd == STDOUT_FILENO)
 	{
@@ -413,15 +419,13 @@ sys_write (int fd, char *buf, unsigned size)
 	
 	/* Otherwise it is file descriptor. Get the opened file by 
 	   current thread. */
-	struct file *f = get_file (fd);
+	struct file_meta *fm = get_file (fd);
 
 	/* If current thread doesn't own the file, then return error. */
-	if (f == NULL) 
+	if (fm == NULL) 
 		sys_exit (ERROR);
 
-	int k = file_write (f, buf, size);
-
-	return k;
+	return file_write (fm->file, buf, size);
 }
 
 /* Function that is called when SYS_SEEK invoked. Changes the next
@@ -431,20 +435,20 @@ void
 sys_seek (int fd, unsigned pos) 
 {
 	/* If the file is stdout or stdin, then return error. */
-	if (fd == STDIN_FILENO || STDOUT_FILENO)
+	if (fd == STDIN_FILENO || fd == STDOUT_FILENO)
 	{
 		sys_exit (ERROR);
 	}
 
 	/* Otherwise it is file descriptor. Get the opened file by 
 	   current thread. */
-	struct file *f = get_file (fd);
+	struct file_meta *fm = get_file (fd);
 
 	/* If current thread doesn't own the file, then return error. */
-	if (f == NULL) 
+	if (fm == NULL) 
 		sys_exit (ERROR);
 
-	file_seek (f, pos);
+	file_seek (fm->file, pos);
 }
 
 /* Function that is called when SYS_TELL invoked. Return the
@@ -454,18 +458,18 @@ unsigned
 sys_tell (int fd) 
 {
 	/* If the file is stdout or stdin, then return error. */
-	if (fd == STDIN_FILENO || STDOUT_FILENO)
+	if (fd == STDIN_FILENO || fd == STDOUT_FILENO)
 		sys_exit (ERROR);
 
 	/* Otherwise it is file descriptor. Get the opened file by 
 	   current thread. */
-	struct file *f = get_file (fd);
+	struct file_meta *fm = get_file (fd);
 
 	/* If current thread doesn't own the file, then return error. */
-	if (f == NULL) 
+	if (fm == NULL) 
 		sys_exit (ERROR);
 
-	return file_tell (f);
+	return file_tell (fm->file);
 }
 
 /* Function that is called when SYS_CLOSE invoked. Closes file
