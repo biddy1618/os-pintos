@@ -478,8 +478,12 @@ load (const char **parsed_cmdline, void (**eip) (void), void **esp)
 
   done:
   
-  /* We arrive here whether the load is successful or not. */
-  // file_close (file);
+  /* We arrive here whether the load is successful or not. No need
+     to close file, instead close it when the process terminates
+  
+  file_close (file);
+
+     in process_exit(...) function. */
 
   return success;
 }
