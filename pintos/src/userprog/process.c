@@ -232,8 +232,10 @@ process_exit (void)
   /* Allow write to file. */
   lock_acquire (&filesys_lock);
   if (thread_current ()->execfile != NULL)
+  {
     file_allow_write (thread_current ()->execfile);
-  file_close (thread_current ()->execfile);
+    file_close (thread_current ()->execfile);
+  }
   lock_release (&filesys_lock);
   
   /* Deallocate all the child meta information of current thread. */
