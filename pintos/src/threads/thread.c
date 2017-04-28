@@ -12,6 +12,7 @@
 #include "threads/synch.h"
 #include "threads/vaddr.h"
 #include "threads/malloc.h"
+#include "vm/frame.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #include "filesys/file.h"
@@ -317,8 +318,8 @@ clear_files (void)
     struct file_meta *fm = list_entry (e, struct file_meta, elem);
 
     /* Close file, if opened. BUG: compiler says file_close if 
-       not found. */
-    // file_close (fm->file);
+       not found.
+     file_close (fm->file); */
 
     /* Remove from the list and deallocate file meta. */
     list_remove (&fm->elem);
@@ -351,6 +352,9 @@ thread_init (void)
   list_init (&ready_list);
   list_init (&all_list);
   lock_init (&filesys_lock);
+
+  /* Initialize frame table. */
+  frame_table_init ();
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();

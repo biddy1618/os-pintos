@@ -4,8 +4,10 @@
 #include "userprog/gdt.h"
 #include "threads/interrupt.h"
 #include "threads/thread.h"
+#include "threads/vaddr.h"
 
 #include "userprog/syscall.h"
+#include "vm/page.h"
 
 /* Number of page faults processed. */
 static long long page_fault_cnt;
@@ -149,6 +151,21 @@ page_fault (struct intr_frame *f)
   not_present = (f->error_code & PF_P) == 0;
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
+
+  /* If page is not present and fault address is user virtual
+     address, then try to load the page. */
+  if (not_present && is_user_vaddr (fault_addr))
+  {
+    /* If page that faulting address belongs to is page of
+       current process, then load it. */  
+    struct sup_page_entry *spte = get_spte (fault_addr);
+    if (spte != NULL)
+    {
+      load_page (spte);
+      return;
+    }
+    sys_exit (ERROR);
+  }
 
   /* If the exception was caused by the user, then terminate
      current process with ERROR. NOTE: for future, there could

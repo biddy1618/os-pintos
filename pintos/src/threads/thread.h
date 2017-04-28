@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include <hash.h>
 #include "threads/synch.h"
 
 // #include "filesys/file.h"
@@ -107,6 +108,8 @@ struct thread
 
     int fd;                             /* Values from which file descriptors
                                            are obtained. */
+
+    struct hash spt;                    /* Supplemented Page Table. */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
