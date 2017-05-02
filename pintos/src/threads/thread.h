@@ -4,9 +4,8 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include <hash.h>
 #include "threads/synch.h"
-
-// #include "filesys/file.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -114,6 +113,9 @@ struct thread
     struct file *execfile;              /* Pointer to its executable file. */
 #endif
 
+    struct hash spt;                  /* Corresponding SPTE pointer for current frame
+                                           entry with all the information in SPTE. */
+    
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
   };

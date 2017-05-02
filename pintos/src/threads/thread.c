@@ -12,6 +12,9 @@
 #include "threads/synch.h"
 #include "threads/vaddr.h"
 #include "threads/malloc.h"
+
+#include "vm/page.h"
+
 #ifdef USERPROG
 #include "userprog/process.h"
 #include "filesys/file.h"
@@ -739,6 +742,7 @@ init_thread (struct thread *t, const char *name, int priority)
   list_push_back (&all_list, &t->allelem);
   list_init (&t->children);
   list_init (&t->files);
+  spt_init (t);
   t->fd = START_FD; 
 }
 
