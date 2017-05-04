@@ -20,6 +20,9 @@
 #include "threads/synch.h"
 #include "threads/malloc.h"
 
+#include "vm/page.h"
+#include "vm/frame.h"
+
 static thread_func start_process NO_RETURN;
 static bool load (const char **parsed_cmdline, 
               void (**eip) (void), void **esp);
@@ -119,6 +122,10 @@ start_process (void *cmdline_)
   struct args_sema *cmdline = cmdline_;
   struct intr_frame if_;
   bool success;
+
+#ifdef VM
+  spt_init (thread_current ());
+#endif
   
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
@@ -568,6 +575,31 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
     size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
     size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
+#ifdef VM
+    struct spte *spte = create_page (upage);
+
+    struct frame_entry *fe = frame_alloc (PAL_USER | writable, spte);
+    if (fe == NULL)
+      PANIC ("Fail allocating frame.");
+
+    if (file_read (file, spte->kpage, page_read_bytes) != (int) page_read_bytes)
+    {
+      PANIC ("Fail asserting read bytes.");
+    }
+    memset (spte->kpage + page_read_bytes, 0, page_zero_bytes);
+
+    if (!install_page (spte->upage, spte->kpage, writable))
+    {
+      PANIC ("Error at installing page.");
+    }
+
+    read_bytes -= page_read_bytes;
+    zero_bytes -= page_zero_bytes;
+    ofs += page_read_bytes;
+    upage += PGSIZE;
+
+#else
+
       /* Get a page of memory. */
     uint8_t *kpage = palloc_get_page (PAL_USER);
     if (kpage == NULL)
@@ -592,6 +624,8 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
     read_bytes -= page_read_bytes;
     zero_bytes -= page_zero_bytes;
     upage += PGSIZE;
+
+#endif
   }
   return true;
 }

@@ -13,11 +13,13 @@
 #include "threads/vaddr.h"
 #include "threads/malloc.h"
 
-#include "vm/page.h"
-
 #ifdef USERPROG
 #include "userprog/process.h"
 #include "filesys/file.h"
+#endif
+
+#ifdef VM
+#include "vm/frame.h"
 #endif
 
 /* Random value for struct thread's `magic' member.
@@ -360,6 +362,10 @@ thread_init (void)
   init_thread (initial_thread, "main", PRI_DEFAULT);
   initial_thread->status = THREAD_RUNNING;
   initial_thread->tid = allocate_tid ();
+
+#ifdef VM
+  frame_init ();
+#endif
 }
 
 /* Starts preemptive thread scheduling by enabling interrupts.
@@ -741,8 +747,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->magic = THREAD_MAGIC;
   list_push_back (&all_list, &t->allelem);
   list_init (&t->children);
-  list_init (&t->files);
-  spt_init (t);
+  list_init (&t->files);  
   t->fd = START_FD; 
 }
 

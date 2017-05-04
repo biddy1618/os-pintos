@@ -2,7 +2,6 @@
 #include "vm/frame.h"
 #include "threads/thread.h"
 #include "threads/synch.h"
-#include "threads/palloc.h"
 #include "threads/malloc.h"
 
 
@@ -10,15 +9,6 @@ struct list frame_table;	/* Table for holding frame entries. */
 struct lock frame_lock;	/* Lock to synchronize operations over frame
 							   table, since frame table is available for
 							   all user threads. */
-
-/* List entry for frame. */
-struct frame_entry
-{
-	struct list_elem elem;		/* List elem for the frame table list. */
-	struct thread *thread;		/* Thread to which this frame is allocated. */
-	struct spte *spte;			/* Corresponging SPT entry that is linked to
-								   this frame entry. */
-};
 
 /* Initialization of frame table for all threads. Should be called in
    thread system initialization function. */
@@ -56,9 +46,12 @@ void *frame_alloc (enum palloc_flags flags, struct spte *spte)
 	spte->kpage = kpage;
 	fe->thread = thread_current ();
 	fe->spte = spte;
+	spte->fe = fe;
 
 	/* Add frame entry to frame table. */
+	lock_acquire (&frame_lock);
 	list_push_back (&frame_table, &fe->elem);
+	lock_release (&frame_lock);
 
 	/* Return frame entry. NOTE: Just guessed return type, for now
 	   not sure if we need to return at all. TODO: Come up with proper
@@ -70,8 +63,7 @@ void *frame_alloc (enum palloc_flags flags, struct spte *spte)
    frame as new frame. */
 void *frame_evict (void)
 {
-	/* TODO: implement. */
-	PANIC ("Frame evict not implemented.");
+	
 }
 
 

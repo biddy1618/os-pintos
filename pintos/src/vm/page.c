@@ -1,8 +1,9 @@
-#include "threads/malloc.h"
 #include "vm/page.h"
+#include "threads/malloc.h"
 
 static unsigned page_hash_func (const struct hash_elem *, void * UNUSED);
-static bool page_less_func (const struct hash_elem *, const struct hash_elem *,
+static bool page_less_func (const struct hash_elem *, 
+							const struct hash_elem *,
 							void * UNUSED);
 
 
@@ -37,7 +38,8 @@ static unsigned page_hash_func (const struct hash_elem *e, void *aux UNUSED)
 }
 
 /* Comparison function for Hash Table (SPT). */
-static bool page_less_func (const struct hash_elem *a, const struct hash_elem *b,
+static bool page_less_func (const struct hash_elem *a, 
+							const struct hash_elem *b,
 							void *aux UNUSED)
 {
 	struct spte *sa = hash_entry(a, struct spte, elem);
