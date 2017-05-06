@@ -494,10 +494,29 @@ load (const char **parsed_cmdline, void (**eip) (void), void **esp)
 
   return success;
 }
+
+/* Adds a mapping from user virtual address UPAGE to kernel
+   virtual address KPAGE to the page table.
+   If WRITABLE is true, the user process may modify the page;
+   otherwise, it is read-only.
+   UPAGE must not already be mapped.
+   KPAGE should probably be a page obtained from the user pool
+   with palloc_get_page().
+   Returns true on success, false if UPAGE is already mapped or
+   if memory allocation fails. */
+bool
+install_page (void *upage, void *kpage, bool writable)
+{
+  struct thread *t = thread_current ();
+
+  /* Verify that there's not already a page at that virtual
+     address, then map our page there. */
+  return (pagedir_get_page (t->pagedir, upage) == NULL
+    && pagedir_set_page (t->pagedir, upage, kpage, writable));
+}
+
 
 /* load() helpers. */
-
-static bool install_page (void *upage, void *kpage, bool writable);
 
 /* Checks whether PHDR describes a valid, loadable segment in
    FILE and returns true if so, false otherwise. */
@@ -576,21 +595,38 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
     size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
 #ifdef VM
-    struct spte *spte = create_page (upage);
 
-    struct frame_entry *fe = frame_alloc (PAL_USER | writable, spte);
+    /* Allocate a virtual page for current process of type file. */
+    struct spte *spte = create_page (upage, PAL_USER, writable | FILE);
+
+    /* Set the SPT entry with information about the file and file read
+       offset position. */
+    spte->file = file;
+    spte->ofs = ofs;
+    spte->read_bytes = page_read_bytes;
+    spte->zero_bytes = page_zero_bytes;
+    
+    /* Allocate physical frame. */
+    struct frame_entry *fe = frame_alloc (spte);
+
+    /* If allocation failed, return false. */
     if (fe == NULL)
-      PANIC ("Fail allocating frame.");
+      return false;
 
-    if (file_read (file, spte->kpage, page_read_bytes) != (int) page_read_bytes)
+    
+    if (file_read_at (spte->file, fe->kpage, spte->read_bytes, spte->ofs)
+                     != (int) page_read_bytes)
     {
-      PANIC ("Fail asserting read bytes.");
+      free_page (spte);
+      return false;
     }
-    memset (spte->kpage + page_read_bytes, 0, page_zero_bytes);
 
-    if (!install_page (spte->upage, spte->kpage, writable))
+    memset (fe->kpage + page_read_bytes, 0, page_zero_bytes);
+
+    if (!install_page (spte->upage, fe->kpage, writable))
     {
-      PANIC ("Error at installing page.");
+      free_page (spte);
+      return false;
     }
 
     read_bytes -= page_read_bytes;
@@ -710,22 +746,3 @@ setup_stack (void **esp, const char **parsed_fn)
   return success;
 }
 
-/* Adds a mapping from user virtual address UPAGE to kernel
-   virtual address KPAGE to the page table.
-   If WRITABLE is true, the user process may modify the page;
-   otherwise, it is read-only.
-   UPAGE must not already be mapped.
-   KPAGE should probably be a page obtained from the user pool
-   with palloc_get_page().
-   Returns true on success, false if UPAGE is already mapped or
-   if memory allocation fails. */
-static bool
-install_page (void *upage, void *kpage, bool writable)
-{
-  struct thread *t = thread_current ();
-
-  /* Verify that there's not already a page at that virtual
-     address, then map our page there. */
-  return (pagedir_get_page (t->pagedir, upage) == NULL
-    && pagedir_set_page (t->pagedir, upage, kpage, writable));
-}

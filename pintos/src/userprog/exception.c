@@ -5,7 +5,9 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 
+#include "threads/vaddr.h"
 #include "userprog/syscall.h"
+#include "vm/page.h"
 
 /* Number of page faults processed. */
 static long long page_fault_cnt;
@@ -149,6 +151,14 @@ page_fault (struct intr_frame *f)
   not_present = (f->error_code & PF_P) == 0;
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
+
+  if (not_present && fault_addr > ((void *) 0x08048000) &&
+      is_user_vaddr(fault_addr))
+  {
+    struct spte *spte = get_page (fault_addr);
+    if (load_page (spte))
+      return;  
+  }
 
   /* If the exception was caused by the user, then terminate
      current process with ERROR. NOTE: for future, there could

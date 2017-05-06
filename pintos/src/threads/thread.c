@@ -18,10 +18,6 @@
 #include "filesys/file.h"
 #endif
 
-#ifdef VM
-#include "vm/frame.h"
-#endif
-
 /* Random value for struct thread's `magic' member.
    Used to detect stack overflow.  See the big comment at the top
    of thread.h for details. */
@@ -362,10 +358,6 @@ thread_init (void)
   init_thread (initial_thread, "main", PRI_DEFAULT);
   initial_thread->status = THREAD_RUNNING;
   initial_thread->tid = allocate_tid ();
-
-#ifdef VM
-  frame_init ();
-#endif
 }
 
 /* Starts preemptive thread scheduling by enabling interrupts.

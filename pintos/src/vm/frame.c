@@ -1,14 +1,18 @@
 #include <list.h>
 #include "vm/frame.h"
+#include "vm/swap.h"
 #include "threads/thread.h"
 #include "threads/synch.h"
 #include "threads/malloc.h"
+#include "userprog/pagedir.h"
 
 
 struct list frame_table;	/* Table for holding frame entries. */
 struct lock frame_lock;	/* Lock to synchronize operations over frame
 							   table, since frame table is available for
 							   all user threads. */
+
+static void *frame_evict (enum palloc_flags flags);
 
 /* Initialization of frame table for all threads. Should be called in
    thread system initialization function. */
@@ -21,10 +25,10 @@ void frame_init (void)
 /* Whenever thread asks for page, this function should be involved in.
    Basically, it creates frame entry and links it to Supplementary
    Page Table entry of that virtual address of thread. */
-void *frame_alloc (enum palloc_flags flags, struct spte *spte)
+void *frame_alloc (struct spte *spte)
 {
 	/* Allocate page from memory. */
-	uint8_t *kpage = palloc_get_page(flags);
+	uint8_t *kpage = palloc_get_page(spte->flags);
 	
 	struct frame_entry *fe;
 	
@@ -36,14 +40,20 @@ void *frame_alloc (enum palloc_flags flags, struct spte *spte)
 	   be decided later. TODO: Come up with the way to update SPTE
 	   of evicted frame. */
 	if (kpage == NULL)
-		fe = frame_evict ();
-	
-	/* Allocate frame entry if no page was allocated from pool. */
-	if (kpage != NULL)
+	{
+		fe = frame_evict (spte->flags);
+		kpage = fe->kpage;
+	}
+	else 
+	{
+		/* Allocate frame entry if no page was allocated from pool. */
 		fe = malloc (sizeof (struct frame_entry));
+		fe->kpage = kpage;	
+	}
+
+	
 
 	/* Set link of physical address of SPTE and link the SPTE and frame entry. */
-	spte->kpage = kpage;
 	fe->thread = thread_current ();
 	fe->spte = spte;
 	spte->fe = fe;
@@ -61,9 +71,38 @@ void *frame_alloc (enum palloc_flags flags, struct spte *spte)
 
 /* Choose frame to evict frame table, swap it out and return freed
    frame as new frame. */
-void *frame_evict (void)
+static void *frame_evict (enum palloc_flags flags)
 {
-	
+	struct list_elem *le = list_begin (&frame_table);
+	struct frame_entry *fe = NULL;
+	struct thread *t = NULL;
+	struct spte *spte = NULL;
+
+	while (true)
+	{
+		fe = list_entry (le, struct frame_entry, elem);
+		t = fe->thread;
+		spte = fe->spte;
+		if (!(spte->status & PINNED))
+		{
+			if (pagedir_is_accessed (t->pagedir, spte->upage))
+				pagedir_set_accessed (t->pagedir, spte->upage, false);
+			else
+				break;
+		}
+
+		if (le == list_end (&frame_table))
+			le = list_begin (&frame_table);
+	}
+
+	swap_out (spte);
+
+	list_remove (&fe->elem);
+	pagedir_clear_page (t->pagedir, spte->upage);
+	palloc_free_page (fe->kpage);
+	fe->kpage = palloc_get_page (flags);
+	ASSERT (fe->kpage != NULL);
+	return fe->kpage;
 }
 
 
