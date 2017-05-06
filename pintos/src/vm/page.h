@@ -15,6 +15,8 @@ enum spte_flags
 						   page in load page function. */
 };
 
+#define MAX_STACK_SIZE (1 << 23)
+
 /* SPT entry. */
 struct spte
 {
@@ -41,7 +43,7 @@ void spt_init (struct thread *);
 void* create_page (void *, enum palloc_flags, enum spte_flags);
 struct spte *get_page (void *);
 bool load_page (struct spte *);
-bool swap_page (void *);
+bool stack_page (void *);
 void free_page (struct spte *);
 
 #endif

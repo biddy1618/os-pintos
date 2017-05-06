@@ -153,11 +153,20 @@ page_fault (struct intr_frame *f)
   user = (f->error_code & PF_U) != 0;
 
   if (not_present && fault_addr > ((void *) 0x08048000) &&
-      is_user_vaddr(fault_addr))
+      is_user_vaddr (fault_addr))
   {
     struct spte *spte = get_page (fault_addr);
-    if (load_page (spte))
-      return;  
+    
+    if (!spte && fault_addr >= f->esp - 32)
+    {
+      fault_addr = pg_round_down (fault_addr);
+      if (PHYS_BASE - fault_addr > MAX_STACK_SIZE)
+        sys_exit (ERROR);
+      spte = create_page (fault_addr, PAL_USER | PAL_ZERO, WRITABLE);
+    }
+
+    if (spte && load_page (spte))
+      return;
   }
 
   /* If the exception was caused by the user, then terminate
