@@ -151,26 +151,40 @@ page_fault (struct intr_frame *f)
   not_present = (f->error_code & PF_P) == 0;
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
+  printf("exception with fault_addr %p PHYS_BASE %p in thread %s\n", fault_addr, PHYS_BASE, thread_name ());
 
+  // printf("not_present %d write %d user %d\n", not_present, write, user);
   if (not_present && fault_addr > ((void *) 0x08048000) &&
       is_user_vaddr (fault_addr))
   {
-   
+    printf("exception1\n");
     struct spte *spte = get_page (fault_addr);
+    // printf("spte %p\n", spte);
     if (!spte && fault_addr >= f->esp - 32)
     {
+      printf("grow stack\n");
       fault_addr = pg_round_down (fault_addr);
       
       if (PHYS_BASE - fault_addr > MAX_STACK_SIZE)
         sys_exit (ERROR);
       spte = create_page (fault_addr, PAL_USER | PAL_ZERO, WRITABLE | SWAP);
     }
-
+    printf("try loading page %p with spte->upage %p\n", spte, spte->upage);
     if (spte && load_page (spte))
+    {
+      if (fault_addr == (void *) 0x824b000)
+      {
+        printf ("catched this shit, the value is %s\n", (void *) 0x824bd60);
+        printf("CHECK %p\n", *((void **) 0xbffffdd0));
+      }
+      printf("success loading page\n");
       return;
+    }
+    printf("failed in loaing the page\n");
     sys_exit (ERROR);
   }
-  
+
+
   /* If the exception was caused by the user, then terminate
      current process with ERROR. NOTE: for future, there could
      be some modifications to this code part, since this will

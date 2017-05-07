@@ -94,22 +94,30 @@ process_execute (const char *file_name)
   args->parsed_cmdline = parse_args (fn_copy);
   sema_init (&args->block, 0);
 
+  printf("Process execute %s from thread %s\n", args->parsed_cmdline[1], thread_name ());
+
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (args->parsed_cmdline[1], PRI_DEFAULT, 
                       start_process, args);
 
   /* Wait to check for any error in load, and also to be able to free
      the allocated resources. */
+  printf("waiting to process args by process %s\n", thread_name ());
   sema_down (&args->block);
+  printf("finished processing args by process %s\n", thread_name ());
   
   /* If load failed. */
   if (!args->success)
     tid = TID_ERROR;
 
   /* Deallocate allocated resourses. */
+  printf("free pointer cmdline %p\n", args->parsed_cmdline);
   free (args->parsed_cmdline);
+  printf("free pointer args %p\n", args);
   free (args);
+  printf("free pointer page %p\n", fn_copy);
   palloc_free_page (fn_copy); 
+  printf("freed all resources\n");
   
   return tid;
 }
@@ -136,7 +144,8 @@ start_process (void *cmdline_)
                    &if_.eip, &if_.esp);
 
   cmdline->success = success;
-  
+
+
   /* Release the block on the parent process to free the allocated
      memory for copy of command line. */
   sema_up (&cmdline->block);
@@ -145,6 +154,7 @@ start_process (void *cmdline_)
   if (!success) 
     thread_exit ();  
 
+  printf("success loading process\n");
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
      threads/intr-stubs.S).  Because intr_exit takes all of its
@@ -207,7 +217,6 @@ process_exit (void)
 {
   struct thread *cur = thread_current ();
   uint32_t *pd;
-
   
   /* If parent still exists and, in case parent waits for it 
      free the semaphore. NOTE: Parent sets the parent pointer
@@ -596,6 +605,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 
 #ifdef VM
 
+    printf("create virtual page for process\n");
     /* Allocate a virtual page for current process of type file. */
     struct spte *spte = create_page (upage, PAL_USER, writable | FILE);
 
@@ -612,6 +622,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
     /* If allocation failed, return false. */
     if (fe == NULL)
       return false;
+    // printf("fe->kpage %p\n", fe->kpage);
 
     /* Copy file to memory. */
     if (file_read_at (spte->file, fe->kpage, spte->read_bytes, spte->ofs)
@@ -620,7 +631,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
       free_page (spte);
       return false;
     }
-
+    // printf("fe->kpage %p page_read_bytes %d page_zero_bytes %d fe->kpage + page_read_bytes %p\n", fe->kpage, page_read_bytes, page_zero_bytes, fe->kpage + page_read_bytes);
     memset (fe->kpage + page_read_bytes, 0, page_zero_bytes);
 
     if (!install_page (spte->upage, fe->kpage, spte->status & WRITABLE))
@@ -679,7 +690,7 @@ setup_stack (void **esp, const char **parsed_fn)
      other options. */
   spte = create_page (PHYS_BASE - PGSIZE, PAL_USER | PAL_ZERO, WRITABLE | SWAP);
   /* If SPT entry allocation success. */
-
+  printf("setting up the stack spte %p with spte->upage %p\n", spte, spte->upage);
   if (spte != NULL) 
   {
     /* Load the page into the memory, i.e. link a frame to it. */
@@ -698,7 +709,9 @@ setup_stack (void **esp, const char **parsed_fn)
          esp. Store the address of esp into the argument address instead. */ 
       for (; temp > 0; temp--) {
         *esp -= (strlen (parsed_fn[temp]) + 1);
+        printf("stack entry %s\n", parsed_fn[temp]);
         memcpy(*esp, parsed_fn[temp], strlen (parsed_fn[temp]) + 1);
+        printf("stack address %p and its value %s\n", *esp, *esp);
         parsed_fn[temp] = (char *) *esp;
       }
 
@@ -731,6 +744,9 @@ setup_stack (void **esp, const char **parsed_fn)
       temp = 0;
       *esp -= sizeof (void *);
       memcpy (*esp, &temp, sizeof (void *));
+
+      printf("success setting up the stack\n");
+      
       
       /* hex_dump ((uintptr_t) *esp, *esp, (unsigned) PHYS_BASE - (unsigned) *esp, true);
 

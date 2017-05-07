@@ -42,6 +42,8 @@ syscall_handler (struct intr_frame *f UNUSED)
 {
 	/* Get the syscall code. */
 	int code = get_arg (f->esp, f->esp);
+
+	printf("syscall %d in thread %s\n", code, thread_name ());
 	switch (code) {
 		case SYS_HALT:
 		{
@@ -167,8 +169,12 @@ syscall_handler (struct intr_frame *f UNUSED)
 			char *buf =  (char *) get_arg (f->esp + 2 * WORD_SIZE, f->esp);
 			unsigned size = (unsigned) get_arg (f->esp + 3 * WORD_SIZE, f->esp);
 
+			printf("fd %d buf %s with pointer %p and size %d\n", fd, buf, buf, size);
+
 			/* Check the pointer. */
 			check_arg (buf, f->esp);			
+
+			printf("%s\n", buf);
 
 			lock_acquire (&filesys_lock);
 			f->eax = sys_write (fd, buf, size);
@@ -248,26 +254,35 @@ check_arg (void *p, void *esp)
    
     struct spte *spte = get_page (esp);
 
+    printf("check arg in spte %p with spte->upage %p in process %s\n", spte, spte->upage, thread_name ());
+
     if (!spte)
     	sys_exit (ERROR);
 
     spte = get_page (p);
+
+    printf("spte %p for p %p with spte->upage %p, spte loaded %d\n", spte, p, spte->upage/*, p*/, spte->swap_idx);
+
 
     if (spte && spte->swap_idx == LOADED)
     	return;
 
     if (!spte && p >= esp - 32)
     {
-      void *page_p = pg_round_down (p);
-      
-      if (PHYS_BASE - page_p > MAX_STACK_SIZE)
-        sys_exit (ERROR);
+		void *page_p = pg_round_down (p);
 
-      spte = create_page (page_p, PAL_USER | PAL_ZERO, WRITABLE | SWAP);
+		if (PHYS_BASE - page_p > MAX_STACK_SIZE)
+			sys_exit (ERROR);
+		
+		printf("create stack page in process %s\n", thread_name ());
+		spte = create_page (page_p, PAL_USER | PAL_ZERO, WRITABLE | SWAP);
     }
 
     if (spte && load_page (spte))
+    {
+    	printf("success in loading page %p with upage %p\n", spte, spte->upage);
     	return;
+    }
 
     sys_exit (ERROR);
 }

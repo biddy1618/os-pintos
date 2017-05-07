@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 #include "vm/page.h"
 #include "vm/swap.h"
 #include "threads/malloc.h"
@@ -24,6 +25,7 @@ void spt_init (struct thread *t)
 /* Create virtual page that starts at address given as uaddr. */
 void *create_page (void *uaddr, enum palloc_flags flags, enum spte_flags status)
 {
+	printf("created page with p %p in thread %s\n", uaddr, thread_name ());
 	struct spte *page = malloc (sizeof (struct spte));
 	page->upage = uaddr;
 	page->flags = flags;
@@ -69,12 +71,16 @@ bool load_page (struct spte *spte)
 	/* Allocate a frame for current SPTE. */
 	struct frame_entry *fe = frame_alloc(spte);
 
+	// printf("allocating frame for page %p with fe %p\n", spte, fe);
 	if (!fe)
 		return false;
 
 	/* If page is in swap area, then load it. */
 	if (spte->swap_idx != LOADED)
+	{
+		printf("loading page from swap\n");
 		swap_in (spte);
+	}
 
 	/* If page is associated with file, then load the file into
 	   memory. */
@@ -85,12 +91,25 @@ bool load_page (struct spte *spte)
 						fe->kpage, 
 						spte->read_bytes, 
 						spte->ofs) != (int) spte->read_bytes)
+		{
 			free_page (spte);
 			return false;
+		}
 		memset (fe->kpage + spte->read_bytes, 0, spte->zero_bytes);
 	}
 
 	spte->status &= ~PINNED;
+
+	if (spte->upage == (void *) 0xbffff000)
+	{
+		bool heu = install_page (spte->upage, 
+						fe->kpage, 
+						spte->status & WRITABLE);
+		// printf("Writable %d\n", spte->status & WRITABLE);
+		hex_dump (spte->upage, fe->kpage, PGSIZE, true);
+		// printf("CHECK %p\n", *((void **) 0xbffffdd0));
+		return heu;
+	}
 
 	return install_page (spte->upage, 
 						fe->kpage, 
@@ -100,7 +119,7 @@ bool load_page (struct spte *spte)
 /* Free page and associated memory with it. */
 void free_page (struct spte *spte)
 {
-	
+	printf("freed page %p\n", spte);
 	return;
 }
 

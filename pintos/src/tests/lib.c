@@ -30,6 +30,7 @@ msg (const char *format, ...)
   va_list args;
   if (quiet)
     return;
+  printf("testname %s with pointer %p\n", test_name, test_name);
   va_start (args, format);
   vmsg (format, args, "\n");
   va_end (args);

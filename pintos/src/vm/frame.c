@@ -29,6 +29,7 @@ void *frame_alloc (struct spte *spte)
 {
 	/* Allocate page from memory. */
 	uint8_t *kpage = palloc_get_page(spte->flags);
+	// printf("palloc get page %p\n", kpage);
 	
 	struct frame_entry *fe;
 	
@@ -94,14 +95,16 @@ static void *frame_evict (enum palloc_flags flags)
 			{
 				/* If it is, then swap it out. Since frames designated for
 				   files will in any case be loaded from file, there is no
-				   need to swap the out ot swap area. */ 
+				   need to swap the out ot swap area. */
+				printf("swapping out %p with upage %p\n", spte, spte->upage);
 				swap_out (spte);
 				break;
 			}
-			else if (spte->status & FILE && 
+			else if ((spte->status & FILE) && 
 					pagedir_is_dirty (t->pagedir, spte->upage))
 			{
 				/* If the frame being swapped if from file, the write it. */
+				// printf("write performed\n");
 				file_write_at (spte->file, 
                           		fe->kpage,
                           		spte->read_bytes,
@@ -130,12 +133,13 @@ static void *frame_evict (enum palloc_flags flags)
 
 	/* Get new page from pool. */
 	fe->kpage = palloc_get_page (flags);
+	// printf("fe->kpage inside evict %p with fe %p\n", fe->kpage, fe);
 	
 	/* Since we just freed one page, there shouldn't be problem allocating
 	   new page. */
 	ASSERT (fe->kpage != NULL);
 
-	return fe->kpage;
+	return fe;
 }
 
 

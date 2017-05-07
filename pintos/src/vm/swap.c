@@ -37,12 +37,18 @@ void swap_out (struct spte *spte)
 	if (swap_idx == BITMAP_ERROR)
 		PANIC ("Run out of space in SWAP block.");
 
+	printf("write to block %d spte pointer %p and spte->upate %p with thread %s\n", swap_idx, spte, spte->upage, thread_name ());
+	printf("fe->kpage %p and thread name %s\n", fe->kpage, thread_current ()->name);
 	/* Write to SWAP block. */
 	size_t i = 0;
 	for (; i < SECTORS_PER_PAGE; i++)
+	{
 		block_write (swap_block, 
 					swap_idx * SECTORS_PER_PAGE + i, 
 					fe->kpage + i * BLOCK_SECTOR_SIZE);
+		// printf("swap pointer %d\n", swap_idx * SECTORS_PER_PAGE + i);
+	}
+	hex_dump (spte->upage, fe->kpage, PGSIZE, true);
 
 	/* Change the status of SPT entry by assigning index at SWAP block. */
 	spte->swap_idx = swap_idx;
@@ -57,13 +63,19 @@ void swap_in (struct spte *spte)
 
 	ASSERT (bitmap_test (swap_bitmap, spte->swap_idx))
 	
+	printf("read from block %d spte pointer %p and spte->upage %p with thread %s\n", spte->swap_idx, spte, spte->upage, thread_name ());
 	/* Read to frame entry of SPTE. */
 	struct frame_entry *fe = spte->fe;
 	size_t i = 0;
 	for (;i < SECTORS_PER_PAGE; i++)
+	{
 		block_read (swap_block,
 					spte->swap_idx * SECTORS_PER_PAGE + i,
 					fe->kpage + i * BLOCK_SECTOR_SIZE);
+		
+		// printf("%d\n", spte->swap_idx * SECTORS_PER_PAGE + i);
+	}
+	hex_dump (spte->upage, fe->kpage, PGSIZE, true);
 
 	/* Empty the index for read memory in SWAP bitmap. */
 	bitmap_set (swap_bitmap, spte->swap_idx, false);

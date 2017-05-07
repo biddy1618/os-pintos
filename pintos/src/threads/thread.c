@@ -435,6 +435,7 @@ thread_create (const char *name, int priority,
 
   /* Allocate thread. */
   t = palloc_get_page (PAL_ZERO);
+  printf("allocated page for thread %s from kernel pool with pointer %p\n", name, t);
   if (t == NULL)
     return TID_ERROR;
 
@@ -727,6 +728,7 @@ init_thread (struct thread *t, const char *name, int priority)
   ASSERT (PRI_MIN <= priority && priority <= PRI_MAX);
   ASSERT (name != NULL);
   
+  printf("copying name %s in thread\n", name);
   memset (t, 0, sizeof *t);
   t->status = THREAD_BLOCKED;
   strlcpy (t->name, name, sizeof t->name);
