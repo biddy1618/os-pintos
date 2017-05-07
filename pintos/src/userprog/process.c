@@ -613,7 +613,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
     if (fe == NULL)
       return false;
 
-    
+    /* Copy file to memory. */
     if (file_read_at (spte->file, fe->kpage, spte->read_bytes, spte->ofs)
                      != (int) page_read_bytes)
     {
@@ -623,7 +623,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 
     memset (fe->kpage + page_read_bytes, 0, page_zero_bytes);
 
-    if (!install_page (spte->upage, fe->kpage, writable))
+    if (!install_page (spte->upage, fe->kpage, spte->status & WRITABLE))
     {
       free_page (spte);
       return false;

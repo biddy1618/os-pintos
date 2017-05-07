@@ -41,7 +41,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 {
 	/* Get the syscall code. */
 	int code = get_arg (f->esp);
-
+	
 	switch (code) {
 		case SYS_HALT:
 		{
@@ -145,13 +145,16 @@ syscall_handler (struct intr_frame *f UNUSED)
 		case SYS_READ:
 		{
 			/* Get arguments. */
+
 			int fd = get_arg (f->esp + WORD_SIZE);
+			
 			char *buf = (char *) get_arg (f->esp + 2 * WORD_SIZE);
+			
 			unsigned size = (unsigned) get_arg (f->esp + 3 * WORD_SIZE);
-
+			
 			/* Check the pointer. */
-			check_arg (buf);			
-
+			check_arg (buf);
+						
 			lock_acquire (&filesys_lock);
 			f->eax = sys_read (fd, buf, size);
 			lock_release (&filesys_lock);
@@ -263,7 +266,6 @@ sys_exit (int status)
 {
 	/* Print exit message. */
 	printf ("%s: exit(%d)\n", thread_name (), status);
-
 	/* Set the status of current terminating thread. */
 	set_status (status);
 	if (lock_held_by_current_thread (&filesys_lock))

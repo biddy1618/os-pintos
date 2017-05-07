@@ -175,7 +175,6 @@ set_status (int status)
   struct thread *t = thread_current ();
   
   /* TODO: Check if parent exists. */
-
   struct child_meta *cm = get_child (t->tid, t->parent);
   /* If no such child, then return. */
   if (cm == NULL)
@@ -185,7 +184,6 @@ set_status (int status)
   }
   /* Set the status. */
   cm->status = status;
-
   /* Sema up the semaphore that is used to indicate whether this
      thread has been finished, or not. Used by parent process. */
   sema_up (&cm->finished);
@@ -556,15 +554,13 @@ void
 thread_exit (void) 
 {
   ASSERT (!intr_context ());
-
+  
 #ifdef USERPROG
   process_exit ();
 #endif
-
   /* Remove thread from all threads list, set our status to dying,
      and schedule another process.  That process will destroy us
      when it calls thread_schedule_tail(). */
-  // printf("thread_exit\n");
   intr_disable ();
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;

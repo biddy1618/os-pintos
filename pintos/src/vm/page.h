@@ -1,6 +1,7 @@
 #ifndef VM_PAGE_H
 #define VM_PAGE_H
 
+#include <bitmap.h>
 #include "threads/thread.h"
 #include "filesys/file.h"
 #include "vm/frame.h"
@@ -8,7 +9,7 @@
 enum spte_flags
 {
 	WRITABLE = 0x1,		/* Indicates if current can be written upon. */
-	SWAPPED = 0x2,		/* Indicates if this page is swapped. */
+	SWAP = 0x2,			/* Indicates if this page is swapped. */
 	FILE = 0x4,			/* Indicates if this page is associated with file. */
 	PINNED = 0x8		/* Indicates if this page is pinned. Used to avoid
 						   race condition in allocating frame while loading
@@ -16,6 +17,7 @@ enum spte_flags
 };
 
 #define MAX_STACK_SIZE (1 << 23)
+#define LOADED BITMAP_ERROR
 
 /* SPT entry. */
 struct spte
@@ -43,7 +45,6 @@ void spt_init (struct thread *);
 void* create_page (void *, enum palloc_flags, enum spte_flags);
 struct spte *get_page (void *);
 bool load_page (struct spte *);
-bool stack_page (void *);
 void free_page (struct spte *);
 
 #endif

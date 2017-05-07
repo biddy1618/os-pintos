@@ -73,6 +73,7 @@ void *frame_alloc (struct spte *spte)
    frame as new frame. */
 static void *frame_evict (enum palloc_flags flags)
 {
+	/* Set up variable for looping through list of frames. */
 	struct list_elem *le = list_begin (&frame_table);
 	struct frame_entry *fe = NULL;
 	struct thread *t = NULL;
@@ -83,11 +84,34 @@ static void *frame_evict (enum palloc_flags flags)
 		fe = list_entry (le, struct frame_entry, elem);
 		t = fe->thread;
 		spte = fe->spte;
+		/* If frame is not pinned - is not being loaded by other process. */
 		if (!(spte->status & PINNED))
 		{
 			if (pagedir_is_accessed (t->pagedir, spte->upage))
+				/* If page was accessed, set the access bit to false. */
 				pagedir_set_accessed (t->pagedir, spte->upage, false);
+			else if (spte->status & SWAP)
+			{
+				/* If it is, then swap it out. Since frames designated for
+				   files will in any case be loaded from file, there is no
+				   need to swap the out ot swap area. */ 
+				swap_out (spte);
+				break;
+			}
+			else if (spte->status & FILE && 
+					pagedir_is_dirty (t->pagedir, spte->upage))
+			{
+				/* If the frame being swapped if from file, the write it. */
+				file_write_at (spte->file, 
+                          		fe->kpage,
+                          		spte->read_bytes,
+                          		spte->ofs);
+				break;
+            
+			}
 			else
+				/* If it is not from stack, then just empty the page
+				   without swapping. */
 				break;
 		}
 
@@ -95,13 +119,22 @@ static void *frame_evict (enum palloc_flags flags)
 			le = list_begin (&frame_table);
 	}
 
-	swap_out (spte);
-
+	/* Remove the frame from the list, since it will be inserted in frame
+	   alloc function anyway. */
 	list_remove (&fe->elem);
+
+	/* Clear the page of current page, so that next time process accessing
+	   this page will rise page fault. */
 	pagedir_clear_page (t->pagedir, spte->upage);
 	palloc_free_page (fe->kpage);
+
+	/* Get new page from pool. */
 	fe->kpage = palloc_get_page (flags);
+	
+	/* Since we just freed one page, there shouldn't be problem allocating
+	   new page. */
 	ASSERT (fe->kpage != NULL);
+
 	return fe->kpage;
 }
 

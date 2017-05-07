@@ -155,25 +155,27 @@ page_fault (struct intr_frame *f)
   if (not_present && fault_addr > ((void *) 0x08048000) &&
       is_user_vaddr (fault_addr))
   {
+   
     struct spte *spte = get_page (fault_addr);
-    
     if (!spte && fault_addr >= f->esp - 32)
     {
       fault_addr = pg_round_down (fault_addr);
+      
       if (PHYS_BASE - fault_addr > MAX_STACK_SIZE)
         sys_exit (ERROR);
-      spte = create_page (fault_addr, PAL_USER | PAL_ZERO, WRITABLE);
+      spte = create_page (fault_addr, PAL_USER | PAL_ZERO, WRITABLE | SWAP);
     }
 
     if (spte && load_page (spte))
       return;
+    sys_exit (ERROR);
   }
-
+  
   /* If the exception was caused by the user, then terminate
      current process with ERROR. NOTE: for future, there could
      be some modifications to this code part, since this will
      exit the process whenever there is a page fault. */
-  if (user)
+  if (user || !not_present)
     sys_exit (ERROR);
 
   /* To implement virtual memory, delete the rest of the function

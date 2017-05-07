@@ -29,7 +29,7 @@ pass tests/userprog/close-stdin
 pass tests/userprog/close-stdout
 pass tests/userprog/close-bad-fd
 pass tests/userprog/read-normal
-pass tests/userprog/read-bad-ptr
+FAIL tests/userprog/read-bad-ptr
 pass tests/userprog/read-boundary
 pass tests/userprog/read-zero
 pass tests/userprog/read-stdout
@@ -67,8 +67,8 @@ pass tests/vm/pt-big-stk-obj
 pass tests/vm/pt-bad-addr
 pass tests/vm/pt-bad-read
 pass tests/vm/pt-write-code
-FAIL tests/vm/pt-write-code2
-FAIL tests/vm/pt-grow-stk-sc
+pass tests/vm/pt-write-code2
+pass tests/vm/pt-grow-stk-sc
 FAIL tests/vm/page-linear
 FAIL tests/vm/page-parallel
 FAIL tests/vm/page-merge-seq

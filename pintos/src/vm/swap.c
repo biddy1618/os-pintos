@@ -44,8 +44,7 @@ void swap_out (struct spte *spte)
 					swap_idx * SECTORS_PER_PAGE + i, 
 					fe->kpage + i * BLOCK_SECTOR_SIZE);
 
-	/* Change the status of SPT entry and assign index at SWAP block. */
-	spte->flags |= SWAPPED;
+	/* Change the status of SPT entry by assigning index at SWAP block. */
 	spte->swap_idx = swap_idx;
 
 	lock_release (&swap_lock);
@@ -68,6 +67,9 @@ void swap_in (struct spte *spte)
 
 	/* Empty the index for read memory in SWAP bitmap. */
 	bitmap_set (swap_bitmap, spte->swap_idx, false);
+
+	/* Set the swap index to indicate that it is loaded. */
+	spte->swap_idx = LOADED;
 
 	lock_release (&swap_lock);
 }

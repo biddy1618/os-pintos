@@ -1,5 +1,6 @@
 #include <string.h>
 #include "vm/page.h"
+#include "vm/swap.h"
 #include "threads/malloc.h"
 #include "threads/vaddr.h"
 #include "userprog/process.h"
@@ -27,7 +28,12 @@ void *create_page (void *uaddr, enum palloc_flags flags, enum spte_flags status)
 	page->upage = uaddr;
 	page->flags = flags;
 	page->status = status;
+	page->fe = NULL;
+	page->swap_idx = LOADED;
 	page->file = NULL;
+	page->ofs = 0;
+	page->read_bytes = 0;
+	page->zero_bytes = 0;
 
 	hash_insert (&thread_current ()->spt, &page->elem);
 
@@ -66,6 +72,10 @@ bool load_page (struct spte *spte)
 	if (!fe)
 		return false;
 
+	/* If page is in swap area, then load it. */
+	if (spte->swap_idx != LOADED)
+		swap_in (spte);
+
 	/* If page is associated with file, then load the file into
 	   memory. */
 	if (spte->status & FILE)
@@ -90,7 +100,7 @@ bool load_page (struct spte *spte)
 /* Free page and associated memory with it. */
 void free_page (struct spte *spte)
 {
-	/* TODO: Implement swap first. */
+	
 	return;
 }
 
