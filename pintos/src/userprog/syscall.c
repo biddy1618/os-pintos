@@ -11,11 +11,12 @@
 #include "devices/input.h"
 #include "threads/vaddr.h"
 #include "userprog/pagedir.h"
+#include "vm/page.h"
 
 static void syscall_handler (struct intr_frame *);
 
-static int get_arg (void *);
-static void check_arg (void *);
+static int get_arg (void *, void *);
+static void check_arg (void *, void *);
 static int sys_exec (char *);
 static int sys_wait (tid_t);
 static bool sys_create (char *, unsigned);
@@ -40,8 +41,7 @@ static void
 syscall_handler (struct intr_frame *f UNUSED) 
 {
 	/* Get the syscall code. */
-	int code = get_arg (f->esp);
-	
+	int code = get_arg (f->esp, f->esp);
 	switch (code) {
 		case SYS_HALT:
 		{
@@ -52,17 +52,17 @@ syscall_handler (struct intr_frame *f UNUSED)
 		case SYS_EXIT:
 		{	
 			/* Get first argument. */
-			int status = get_arg (f->esp + WORD_SIZE);
+			int status = get_arg (f->esp + WORD_SIZE, f->esp);
 			sys_exit (status);
 			break;
 		}
 		case SYS_EXEC:
 		{
 			/* Get first argument. */
-			char *file_name = (char *) get_arg (f->esp + WORD_SIZE);
+			char *file_name = (char *) get_arg (f->esp + WORD_SIZE, f->esp);
 
 			/* Check the pointer. */
-			check_arg (file_name);
+			check_arg (file_name, f->esp);
 
 			/* I was looking in the for the information as to where save
 			   return value from the sys_call. Couldn't find any except
@@ -85,7 +85,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 			   that it could cause. */
 
 			/* Get first argument. */
-			tid_t tid = get_arg (f->esp + WORD_SIZE);
+			tid_t tid = get_arg (f->esp + WORD_SIZE, f->esp);
 
 			f->eax = sys_wait (tid);
 			break;
@@ -93,12 +93,12 @@ syscall_handler (struct intr_frame *f UNUSED)
 		case SYS_CREATE:
 		{
 			/* Get arguments. */
-			char *file = (char *) get_arg (f->esp + WORD_SIZE);
+			char *file = (char *) get_arg (f->esp + WORD_SIZE, f->esp);
 			unsigned init_size = (unsigned) get_arg (f->esp + 
-												2 * WORD_SIZE);
+												2 * WORD_SIZE, f->esp);
 
 			/* Check the pointer. */
-			check_arg (file);			
+			check_arg (file, f->esp);			
 
 			lock_acquire (&filesys_lock);
 			f->eax = sys_create (file, init_size);
@@ -108,10 +108,10 @@ syscall_handler (struct intr_frame *f UNUSED)
 		case SYS_REMOVE:
 		{
 			/* Get first argument. */
-			char *file = (char *) get_arg (f->esp + WORD_SIZE);
+			char *file = (char *) get_arg (f->esp + WORD_SIZE, f->esp);
 
 			/* Check the pointer. */
-			check_arg (file);			
+			check_arg (file, f->esp);			
 
 			lock_acquire (&filesys_lock);
 			f->eax = sys_remove (file);
@@ -122,10 +122,10 @@ syscall_handler (struct intr_frame *f UNUSED)
 		case SYS_OPEN:
 		{
 			/* Get first argument. */
-			char *file = (char *) get_arg (f->esp + WORD_SIZE);
+			char *file = (char *) get_arg (f->esp + WORD_SIZE, f->esp);
 
 			/* Check the pointer. */
-			check_arg (file);			
+			check_arg (file, f->esp);			
 
 			lock_acquire (&filesys_lock);
 			f->eax = sys_open (file);
@@ -135,7 +135,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 		case SYS_FILESIZE:
 		{
 			/* Get first argument. */
-			int fd = get_arg (f->esp + WORD_SIZE);
+			int fd = get_arg (f->esp + WORD_SIZE, f->esp);
 			
 			lock_acquire (&filesys_lock);
 			f->eax = sys_filesize (fd);
@@ -146,14 +146,14 @@ syscall_handler (struct intr_frame *f UNUSED)
 		{
 			/* Get arguments. */
 
-			int fd = get_arg (f->esp + WORD_SIZE);
+			int fd = get_arg (f->esp + WORD_SIZE, f->esp);
 			
-			char *buf = (char *) get_arg (f->esp + 2 * WORD_SIZE);
+			char *buf = (char *) get_arg (f->esp + 2 * WORD_SIZE, f->esp);
 			
-			unsigned size = (unsigned) get_arg (f->esp + 3 * WORD_SIZE);
+			unsigned size = (unsigned) get_arg (f->esp + 3 * WORD_SIZE, f->esp);
 			
 			/* Check the pointer. */
-			check_arg (buf);
+			check_arg (buf, f->esp);
 						
 			lock_acquire (&filesys_lock);
 			f->eax = sys_read (fd, buf, size);
@@ -163,12 +163,12 @@ syscall_handler (struct intr_frame *f UNUSED)
 		case SYS_WRITE:
 		{	
 			/* Get arguments. */
-			int fd = get_arg (f->esp + WORD_SIZE);
-			char *buf =  (char *) get_arg (f->esp + 2 * WORD_SIZE);
-			unsigned size = (unsigned) get_arg (f->esp + 3 * WORD_SIZE);
+			int fd = get_arg (f->esp + WORD_SIZE, f->esp);
+			char *buf =  (char *) get_arg (f->esp + 2 * WORD_SIZE, f->esp);
+			unsigned size = (unsigned) get_arg (f->esp + 3 * WORD_SIZE, f->esp);
 
 			/* Check the pointer. */
-			check_arg (buf);			
+			check_arg (buf, f->esp);			
 
 			lock_acquire (&filesys_lock);
 			f->eax = sys_write (fd, buf, size);
@@ -178,8 +178,8 @@ syscall_handler (struct intr_frame *f UNUSED)
 		case SYS_SEEK:
 		{
 			/* Get arguments. */
-			int fd = get_arg (f->esp + WORD_SIZE);
-			unsigned pos = (unsigned) get_arg (f->esp + 2 * WORD_SIZE);
+			int fd = get_arg (f->esp + WORD_SIZE, f->esp);
+			unsigned pos = (unsigned) get_arg (f->esp + 2 * WORD_SIZE, f->esp);
 			
 			lock_acquire (&filesys_lock);
 			sys_seek (fd, pos);
@@ -189,7 +189,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 		case SYS_TELL:
 		{
 			/* Get first argument. */
-			int fd = get_arg (f->esp + WORD_SIZE);
+			int fd = get_arg (f->esp + WORD_SIZE, f->esp);
 			
 			lock_acquire (&filesys_lock);
 			f->eax = sys_tell (fd);
@@ -199,7 +199,7 @@ syscall_handler (struct intr_frame *f UNUSED)
 		case SYS_CLOSE:
 		{	
 			/* Get first argument. */
-			int fd = get_arg (f->esp + WORD_SIZE);
+			int fd = get_arg (f->esp + WORD_SIZE, f->esp);
 			
 			lock_acquire (&filesys_lock);
 			sys_close (fd);
@@ -241,22 +241,44 @@ syscall_handler (struct intr_frame *f UNUSED)
 /* Check if given address belongs to user virtual address and is from
    current thread's page directory. If not, then exit with error. */
 void
-check_arg (void *p)
+check_arg (void *p, void *esp)
 {
-	if (!is_user_vaddr (p) || 
-		!pagedir_get_page (thread_current ()->pagedir, p))
-	{
-		sys_exit (ERROR);
-	}
+	if (!is_user_vaddr (p) || p < ((void *) 0x08048000))
+    	sys_exit (ERROR);
+   
+    struct spte *spte = get_page (esp);
+
+    if (!spte)
+    	sys_exit (ERROR);
+
+    spte = get_page (p);
+
+    if (spte && spte->swap_idx == LOADED)
+    	return;
+
+    if (!spte && p >= esp - 32)
+    {
+      void *page_p = pg_round_down (p);
+      
+      if (PHYS_BASE - page_p > MAX_STACK_SIZE)
+        sys_exit (ERROR);
+
+      spte = create_page (page_p, PAL_USER | PAL_ZERO, WRITABLE | SWAP);
+    }
+
+    if (spte && load_page (spte))
+    	return;
+
+    sys_exit (ERROR);
 }
 
 /* Get the value from stack that is placed as size of integer. Check if 
    the pointer obtained belongs to user virtual address. */
 int
-get_arg (void *esp)
+get_arg (void *p, void *esp)
 {	
-	check_arg (esp);
-	return *((int *) esp);
+	check_arg (p, esp);
+	return *((int *) p);
 }
 
 /* Function that is called when SYS_EXIT invoked. Exits current thread.

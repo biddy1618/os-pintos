@@ -671,13 +671,19 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 static bool
 setup_stack (void **esp, const char **parsed_fn) 
 {
-  uint8_t *kpage;
+  /* SPT entry for stack. */
+  struct spte *spte = NULL;
   bool success = false;
 
-  kpage = palloc_get_page (PAL_USER | PAL_ZERO);
-  if (kpage != NULL) 
+  /* Create SPT entry for stack with virtual address PHYS_BASE - PGSIZE, and other
+     other options. */
+  spte = create_page (PHYS_BASE - PGSIZE, PAL_USER | PAL_ZERO, WRITABLE | SWAP);
+  /* If SPT entry allocation success. */
+
+  if (spte != NULL) 
   {
-    success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
+    /* Load the page into the memory, i.e. link a frame to it. */
+    success = load_page (spte);
     
     if (success) {
       
@@ -738,7 +744,7 @@ setup_stack (void **esp, const char **parsed_fn)
       */
     }
     else {
-      palloc_free_page (kpage);
+      free_page (spte);
       return success;
     }
   }
