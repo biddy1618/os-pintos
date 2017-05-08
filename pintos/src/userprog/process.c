@@ -132,7 +132,7 @@ start_process (void *cmdline_)
   bool success;
 
 #ifdef VM
-  spt_init (thread_current ());
+  spt_init ();
 #endif
   
   /* Initialize interrupt frame and load executable. */
@@ -258,6 +258,7 @@ process_exit (void)
   /* Deallocate all the files meta information of current thread. */
   clear_files ();
 
+  spt_destroy ();
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
   pd = cur->pagedir;
@@ -611,10 +612,10 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 
     /* Set the SPT entry with information about the file and file read
        offset position. */
-    spte->file = file;
-    spte->ofs = ofs;
-    spte->read_bytes = page_read_bytes;
-    spte->zero_bytes = page_zero_bytes;
+    // spte->file = file;
+    // spte->ofs = ofs;
+    // spte->read_bytes = page_read_bytes;
+    // spte->zero_bytes = page_zero_bytes;
     
     /* Allocate physical frame. */
     struct frame_entry *fe = frame_alloc (spte);
@@ -625,7 +626,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
     // printf("fe->kpage %p\n", fe->kpage);
 
     /* Copy file to memory. */
-    if (file_read_at (spte->file, fe->kpage, spte->read_bytes, spte->ofs)
+    if (file_read_at (file, fe->kpage, page_read_bytes, ofs)
                      != (int) page_read_bytes)
     {
       free_page (spte);

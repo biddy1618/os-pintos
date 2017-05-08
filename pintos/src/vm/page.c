@@ -11,15 +11,17 @@ static unsigned page_hash_func (const struct hash_elem *,
 static bool page_less_func (const struct hash_elem *, 
 							const struct hash_elem *,
 							void * UNUSED);
+static void page_free_func (struct hash_elem *e,
+							void *aux UNUSED);
 
 
 
 
 /* Initialize the hash table that is used as Supplementary Page
    Table. */
-void spt_init (struct thread *t)
+void spt_init (void)
 {
-	hash_init(&t->spt, page_hash_func, page_less_func, NULL);
+	hash_init(&thread_current ()->spt, page_hash_func, page_less_func, NULL);
 }
 
 /* Create virtual page that starts at address given as uaddr. */
@@ -32,10 +34,10 @@ void *create_page (void *uaddr, enum palloc_flags flags, enum spte_flags status)
 	page->status = status;
 	page->fe = NULL;
 	page->swap_idx = LOADED;
-	page->file = NULL;
-	page->ofs = 0;
-	page->read_bytes = 0;
-	page->zero_bytes = 0;
+	// page->file = NULL;
+	// page->ofs = 0;
+	// page->read_bytes = 0;
+	// page->zero_bytes = 0;
 
 	hash_insert (&thread_current ()->spt, &page->elem);
 
@@ -53,8 +55,8 @@ struct spte *get_page (void *uaddr)
 	spte.upage = pg_round_down (uaddr);
 	
 	/* Try to find the STP entry corresponding to the uaddr. */
-	struct hash_elem *he = hash_find(&thread_current ()->spt, 
-									&spte.elem);
+	struct hash_elem *he = hash_find (&thread_current ()->spt, 
+										&spte.elem);
 
 	/* If the page was found, return the page, otherwise NULL. */
 	return he == NULL ? NULL : hash_entry (he, struct spte, elem);
@@ -84,19 +86,19 @@ bool load_page (struct spte *spte)
 
 	/* If page is associated with file, then load the file into
 	   memory. */
-	if (spte->status & FILE)
-	{
-		/* NOTE: do we need to lock the filesys_lock? */
-		if (file_read_at (spte->file, 
-						fe->kpage, 
-						spte->read_bytes, 
-						spte->ofs) != (int) spte->read_bytes)
-		{
-			free_page (spte);
-			return false;
-		}
-		memset (fe->kpage + spte->read_bytes, 0, spte->zero_bytes);
-	}
+	// if (spte->status & FILE)
+	// {
+	// 	/* NOTE: do we need to lock the filesys_lock? */
+	// 	if (file_read_at (spte->file, 
+	// 					fe->kpage, 
+	// 					spte->read_bytes, 
+	// 					spte->ofs) != (int) spte->read_bytes)
+	// 	{
+	// 		free_page (spte);
+	// 		return false;
+	// 	}
+	// 	memset (fe->kpage + spte->read_bytes, 0, spte->zero_bytes);
+	// }
 
 	spte->status &= ~PINNED;
 
@@ -119,8 +121,29 @@ bool load_page (struct spte *spte)
 /* Free page and associated memory with it. */
 void free_page (struct spte *spte)
 {
-	// printf("freed page %p\n", spte);
-	return;
+	/* In the process exit, the pagedir_destroy(...) actually deallocates
+	   all the pages linked to current process, so there is no need to
+	   manually deallocate all the pages, just need to set bits in swap
+	   bitmap so that it is available for other processes. */
+	if (spte->swap_idx == LOADED)
+	{
+		ASSERT (spte->fe != NULL);
+		// printf("removing frame %p from frames in thread %s\n", spte->fe->kpage, thread_name ());
+		// if (spte->fe->kpage == (void *) 0xc038d000)
+  //             printf("LOL\n");
+            
+		frame_free (spte->fe);
+	}
+	else
+	{
+		swap_free (spte->swap_idx);
+	}
+	free (spte);	
+}
+
+void spt_destroy (void)
+{
+	hash_destroy (&thread_current ()->spt, page_free_func);
 }
 
 /* Hash function for Supplementary Page Table. */
@@ -143,5 +166,10 @@ static bool page_less_func (const struct hash_elem *a,
 	return sa->upage < sb->upage;
 }
 
-
+static void page_free_func (struct hash_elem *e,
+								void *aux UNUSED)
+{
+	struct spte *s = hash_entry (e, struct spte, elem);
+	free_page (s);
+}
 

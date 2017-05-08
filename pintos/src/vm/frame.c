@@ -27,6 +27,7 @@ void frame_init (void)
    Page Table entry of that virtual address of thread. */
 void *frame_alloc (struct spte *spte)
 {
+	lock_acquire (&frame_lock);
 	/* Allocate page from memory. */
 	uint8_t *kpage = palloc_get_page(spte->flags);
 	// printf("palloc get page %p\n", kpage);
@@ -60,15 +61,28 @@ void *frame_alloc (struct spte *spte)
 	spte->fe = fe;
 
 	/* Add frame entry to frame table. */
-	lock_acquire (&frame_lock);
+	// lock_acquire (&frame_lock);
 	list_push_back (&frame_table, &fe->elem);
-	lock_release (&frame_lock);
+	// lock_release (&frame_lock);
 
 	/* Return frame entry. NOTE: Just guessed return type, for now
 	   not sure if we need to return at all. TODO: Come up with proper
 	   return. */
+	lock_release (&frame_lock);
+
 	return fe;
 }
+
+/* Remove frame from frame table. */
+void *frame_free (struct frame_entry *fe)
+{
+	lock_acquire (&frame_lock);
+
+	list_remove (&fe->elem);
+
+	lock_release (&frame_lock);
+}
+
 
 /* Choose frame to evict frame table, swap it out and return freed
    frame as new frame. */
@@ -100,18 +114,18 @@ static void *frame_evict (enum palloc_flags flags)
 				swap_out (spte);
 				break;
 			}
-			else if ((spte->status & FILE) && 
-					pagedir_is_dirty (t->pagedir, spte->upage))
-			{
-				/* If the frame being swapped if from file, the write it. */
-				// printf("write performed\n");
-				file_write_at (spte->file, 
-                          		fe->kpage,
-                          		spte->read_bytes,
-                          		spte->ofs);
-				break;
+			// else if ((spte->status & FILE) && 
+			// 		pagedir_is_dirty (t->pagedir, spte->upage))
+			// {
+			// 	/* If the frame being swapped if from file, the write it. */
+			// 	// printf("write performed\n");
+			// 	file_write_at (spte->file, 
+   //                        		fe->kpage,
+   //                        		spte->read_bytes,
+   //                        		spte->ofs);
+			// 	break;
             
-			}
+			// }
 			else
 				/* If it is not from stack, then just empty the page
 				   without swapping. */
@@ -129,10 +143,12 @@ static void *frame_evict (enum palloc_flags flags)
 	/* Clear the page of current page, so that next time process accessing
 	   this page will rise page fault. */
 	pagedir_clear_page (t->pagedir, spte->upage);
+	// printf("going to free fe->kpage %p\n", fe->kpage);
 	palloc_free_page (fe->kpage);
-
+	// printf("freed\n");
 	/* Get new page from pool. */
 	fe->kpage = palloc_get_page (flags);
+	// printf("got new kpage with fe->kpage %p\n", fe->kpage);
 	// printf("fe->kpage inside evict %p with fe %p\n", fe->kpage, fe);
 	
 	/* Since we just freed one page, there shouldn't be problem allocating

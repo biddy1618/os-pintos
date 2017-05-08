@@ -85,3 +85,12 @@ void swap_in (struct spte *spte)
 
 	lock_release (&swap_lock);
 }
+
+void swap_free (size_t swap_idx)
+{
+	lock_acquire (&swap_lock);
+
+	bitmap_set (swap_bitmap, swap_idx, false);
+
+	lock_release (&swap_lock);	
+}

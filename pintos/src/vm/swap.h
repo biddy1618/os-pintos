@@ -15,5 +15,6 @@ struct lock swap_lock;
 void swap_init (void);
 void swap_out (struct spte *spte);
 void swap_in (struct spte *spte);
+void swap_free (size_t swap_idx);
 
 #endif
