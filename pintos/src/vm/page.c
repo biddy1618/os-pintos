@@ -25,7 +25,7 @@ void spt_init (struct thread *t)
 /* Create virtual page that starts at address given as uaddr. */
 void *create_page (void *uaddr, enum palloc_flags flags, enum spte_flags status)
 {
-	printf("created page with p %p in thread %s\n", uaddr, thread_name ());
+	// printf("created page with p %p in thread %s\n", uaddr, thread_name ());
 	struct spte *page = malloc (sizeof (struct spte));
 	page->upage = uaddr;
 	page->flags = flags;
@@ -78,7 +78,7 @@ bool load_page (struct spte *spte)
 	/* If page is in swap area, then load it. */
 	if (spte->swap_idx != LOADED)
 	{
-		printf("loading page from swap\n");
+		// printf("loading page from swap\n");
 		swap_in (spte);
 	}
 
@@ -106,7 +106,7 @@ bool load_page (struct spte *spte)
 						fe->kpage, 
 						spte->status & WRITABLE);
 		// printf("Writable %d\n", spte->status & WRITABLE);
-		hex_dump (spte->upage, fe->kpage, PGSIZE, true);
+		// hex_dump (spte->upage, fe->kpage, PGSIZE, true);
 		// printf("CHECK %p\n", *((void **) 0xbffffdd0));
 		return heu;
 	}
@@ -119,7 +119,7 @@ bool load_page (struct spte *spte)
 /* Free page and associated memory with it. */
 void free_page (struct spte *spte)
 {
-	printf("freed page %p\n", spte);
+	// printf("freed page %p\n", spte);
 	return;
 }
 

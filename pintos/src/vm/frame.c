@@ -96,7 +96,7 @@ static void *frame_evict (enum palloc_flags flags)
 				/* If it is, then swap it out. Since frames designated for
 				   files will in any case be loaded from file, there is no
 				   need to swap the out ot swap area. */
-				printf("swapping out %p with upage %p\n", spte, spte->upage);
+				// printf("swapping out %p with upage %p\n", spte, spte->upage);
 				swap_out (spte);
 				break;
 			}
