@@ -19,6 +19,6 @@ struct frame_entry
 
 void frame_init (void);
 void *frame_alloc (struct spte *);
-void *frame_free (struct frame_entry *);
+void frame_free (struct frame_entry *);
 
 #endif
