@@ -172,11 +172,11 @@ page_fault (struct intr_frame *f)
     // printf("try loading page %p with spte->upage %p\n", spte, spte->upage);
     if (spte && load_page (spte))
     {
-      if (fault_addr == (void *) 0x824b000)
-      {
-        // printf ("catched this shit, the value is %s\n", (void *) 0x824bd60);
-        // printf("CHECK %p\n", *((void **) 0xbffffdd0));
-      }
+      // if (fault_addr == (void *) 0x824b000)
+      // {
+      //   printf ("catched this shit, the value is %s\n", (void *) 0x824bd60);
+      //   printf("CHECK %p\n", *((void **) 0xbffffdd0));
+      // }
       // printf("success loading page\n");
       return;
     }

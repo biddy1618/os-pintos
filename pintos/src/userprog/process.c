@@ -258,6 +258,9 @@ process_exit (void)
   /* Deallocate all the files meta information of current thread. */
   clear_files ();
 
+  /* Clear all memory maped pages. Given -1 clears all pages. */
+  page_unmap (TID_ERROR);
+
   spt_destroy ();
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
