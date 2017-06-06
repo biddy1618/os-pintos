@@ -2,6 +2,9 @@
 #include "vm/swap.h"
 #include "devices/block.h"
 
+struct bitmap *swap_bitmap;
+struct block *swap_block;
+struct lock swap_lock; 
 
 /* Initialize swap block. */
 void swap_init (void)

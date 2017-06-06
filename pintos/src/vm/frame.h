@@ -4,12 +4,10 @@
 #include "threads/palloc.h"
 #include "vm/page.h"
 
-
-
 /* List entry for frame. */
 struct frame_entry
 {
-	struct spte *spte;			/* Corresponging SPT entry that is linked to
+	struct spte *spte;			/* Corresponding SPT entry that is linked to
 								   this frame entry. */
 	void *kpage;				/* Physical address of memory that is linked
 								   to current frame. */

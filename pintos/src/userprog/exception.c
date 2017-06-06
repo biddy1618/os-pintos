@@ -167,7 +167,9 @@ page_fault (struct intr_frame *f)
       
       if (PHYS_BASE - fault_addr > MAX_STACK_SIZE)
         sys_exit (ERROR);
-      spte = create_page (fault_addr, PAL_USER | PAL_ZERO, WRITABLE | SWAP);
+      spte = create_page (fault_addr, 
+                          PAL_USER | PAL_ZERO,
+                          WRITABLE | SWAP);
     }
     // printf("try loading page %p with spte->upage %p\n", spte, spte->upage);
     if (spte && load_page (spte))

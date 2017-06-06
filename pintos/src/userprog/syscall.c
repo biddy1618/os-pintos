@@ -547,7 +547,7 @@ sys_mmap (int fd, void *upage)
 {
     /* Check the pointer for user page - if it page aligned, if
        it is from user virtual address space, or if it is less
-       than */
+       than the start of the paging address. */
     if ((uint32_t) upage % PGSIZE != 0 || 
         !is_user_vaddr (upage) ||
         upage < (void *) 0x08048000)
